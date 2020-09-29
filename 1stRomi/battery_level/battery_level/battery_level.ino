@@ -1,6 +1,10 @@
 #define BUZZER 6
 #define BAUD_RATE 9600
 #define BATTLEV 19
+#define ADC_REF_VAL 5/(2^10) //# The AREF pin is 5V and the ADC is 10-bit, so a value of 0 means 0V, and a value of 2^10
+// means 5V. So one unit of the ADC returned value will be (5/(2^10)).
+#define VOLT_DIV 3 // we also know that there is a voltage divider on the VSW pin, so whatever we read will be just 1/3 of the real voltage.
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -19,6 +23,7 @@ unsigned long elapsed_time = 0;
 unsigned long last_timestamp = 0;
 unsigned int batt_lev_measure_time = 50; // we'll measure battery every 50 ms.
 int batt_level = 0;
+int analog_val = 0;
 
 void loop() {
   // Implement a millis() or micros() task block
@@ -43,7 +48,8 @@ void loop() {
         // !! NOT RESETING THE TIME STAMP IS AN EXTREMELY COMMON BUG !!
         last_timestamp = millis();
 
-        batt_level = analogRead(BATTLEV);
+        analog_val = analogRead(BATTLEV);
+        batt_level = analog_val * ADC_REF_VAL * VOLT_DIV;
         Serial.println(batt_level);
     }
 
