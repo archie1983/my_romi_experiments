@@ -16,11 +16,6 @@ void setup() {
   pinMode(RIGHT_MOTOR_RUN, OUTPUT);
   pinMode(LEFT_MOTOR_RUN, OUTPUT);
 
-  play_tone(10);
-  //play_tone(200);
-
-  go_forward();
-
   //Start a serial connection
   Serial.begin(BAUD_RATE);
 
@@ -31,19 +26,54 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  act_on_commands();
+}
+
+/**
+ * Reads a command from the Serial connection and acts on it
+ */
+void act_on_commands() {
+  //This line checks whether there is anything to read
+  if ( Serial.available() ) {
+      char inChar = Serial.read(); //This reads one byte
+      switch (inChar) {
+        case 'f':
+          Serial.println("Going forward");
+          go_forward();
+          break;
+        case 'l':
+          Serial.println("Flashing LED");
+          flash_led();
+          break;
+        case 'p':
+          Serial.println("Playing tone");
+          play_tone(10);
+          break;
+        default:
+          break;
+      }
+  }
+}
+
+void flash_led() {
   digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1000);                       // wait for a second
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
   delay(1000);                       // wait for a second
 }
 
-
+/**
+ * Plays a tone
+ */
 void play_tone(int volume) {
     analogWrite(BUZZER, volume);
     delay(1000);
     analogWrite(BUZZER, 0);
 }
 
+/**
+ * Moves the motors to go forward
+ */
 void go_forward() {
   digitalWrite(RIGHT_MOTOR_DIR, HIGH);
   digitalWrite(LEFT_MOTOR_DIR, HIGH);
