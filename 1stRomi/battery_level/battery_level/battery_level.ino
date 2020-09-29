@@ -33,8 +33,14 @@ unsigned long time_now = 0;
 unsigned long elapsed_time = 0;
 unsigned long last_timestamp = 0;
 unsigned int batt_lev_measure_time = 50; // we'll measure battery every 50 ms.
+unsigned int last_timestamp_measurement = 0;
 double batt_level = 0;
 double analog_val = 0;
+unsigned int motor_on_off = 2000; // we'll run motors every 2s and then switch off for 2s.
+unsigned int last_timestamp_motors = 0;
+
+boolean motors_running = false;
+boolean motors_must_run = false;
 
 void loop() {
   // Implement a millis() or micros() task block
@@ -45,23 +51,31 @@ void loop() {
     // Get how much time has passed right now.
     time_now = millis();
 
-    // Work out how many milliseconds have gone passed by subtracting
-    // our two timestamps.  time_now will always be bigger than the
-    // time_of_read (except when millis() overflows after 50 days).
-    elapsed_time = time_now - last_timestamp;
-
     // See if 10000 milliseconds have elapsed
     // If not, this block is skipped.
-    if(elapsed_time > batt_lev_measure_time) {
+    if(time_now - last_timestamp_measurement > batt_lev_measure_time) {
 
         // Since 10000ms elapsed, we overwrite our last_timestamp with 
         // the new current time so that another 10000ms is needed to pass.
         // !! NOT RESETING THE TIME STAMP IS AN EXTREMELY COMMON BUG !!
-        last_timestamp = millis();
+        last_timestamp_measurement = millis();
 
         analog_val = analogRead(BATTLEV);
         batt_level = analog_val * ADC_REF_VAL * VOLT_DIV;
         Serial.println(batt_level);
+    }
+
+    if (time_now - last_timestamp_motors > motor_on_off && motors_must_run) {
+      if (motors_running) {
+        stop_motors();
+        motors_running = false;
+      } else {
+        start_motors();
+        motors_running = true;
+      }
+      last_timestamp_motors = millis();
+    } else if(!motors_must_run) {
+      stop_motors();
     }
 
     // Code outside the above if{} will run on every loop!
@@ -80,10 +94,35 @@ void act_on_commands() {
           Serial.println("Motor Forward");
           go_forward();
           break;
+        case 's':
+          Serial.println("Toggling motor run state");
+          motors_must_run = !motors_must_run;
+          break;
         default:
           break;
       }
   }
+}
+
+/**
+ * Starts the motors to go forward
+ */
+void start_motors() {
+  digitalWrite(RIGHT_MOTOR_DIR, HIGH);
+  digitalWrite(LEFT_MOTOR_DIR, HIGH);
+
+  analogWrite(RIGHT_MOTOR_RUN, 250);
+  analogWrite(LEFT_MOTOR_RUN, 250);
+}
+
+/**
+ * Stops motors.
+ */
+void stop_motors() {
+  analogWrite(RIGHT_MOTOR_RUN, 0);
+  analogWrite(LEFT_MOTOR_RUN, 0);  
+  digitalWrite(RIGHT_MOTOR_DIR, LOW);
+  digitalWrite(LEFT_MOTOR_DIR, LOW);
 }
 
 /**
