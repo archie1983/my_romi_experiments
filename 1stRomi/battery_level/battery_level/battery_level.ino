@@ -1,14 +1,25 @@
 #define BUZZER 6
 #define BAUD_RATE 9600
 #define BATTLEV 19
-#define ADC_REF_VAL 5/(2^10) //# The AREF pin is 5V and the ADC is 10-bit, so a value of 0 means 0V, and a value of 2^10
+#define ADC_REF_VAL (5.0/1024.0) //# The AREF pin is 5V and the ADC is 10-bit, so a value of 0 means 0V, and a value of 2^10
 // means 5V. So one unit of the ADC returned value will be (5/(2^10)).
 #define VOLT_DIV 3 // we also know that there is a voltage divider on the VSW pin, so whatever we read will be just 1/3 of the real voltage.
 
+//# for the motor:
+#define RIGHT_MOTOR_DIR 15
+#define LEFT_MOTOR_DIR 16
+#define RIGHT_MOTOR_RUN 9
+#define LEFT_MOTOR_RUN 10
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(BATTLEV, INPUT);
+
+  //# motor
+  pinMode(RIGHT_MOTOR_DIR, OUTPUT);
+  pinMode(LEFT_MOTOR_DIR, OUTPUT);
+  pinMode(RIGHT_MOTOR_RUN, OUTPUT);
+  pinMode(LEFT_MOTOR_RUN, OUTPUT);
 
   //Start a serial connection
   Serial.begin(BAUD_RATE);
@@ -22,8 +33,8 @@ unsigned long time_now = 0;
 unsigned long elapsed_time = 0;
 unsigned long last_timestamp = 0;
 unsigned int batt_lev_measure_time = 50; // we'll measure battery every 50 ms.
-int batt_level = 0;
-int analog_val = 0;
+double batt_level = 0;
+double analog_val = 0;
 
 void loop() {
   // Implement a millis() or micros() task block
@@ -65,24 +76,30 @@ void act_on_commands() {
   if ( Serial.available() ) {
       char inChar = Serial.read(); //This reads one byte
       switch (inChar) {
-        case '1':
-          Serial.println("Pitch 1");
-          //pwm_cnt = 1;
-          break;
-        case '2':
-          Serial.println("Pitch 2");
-          //pwm_cnt = 5;
-          break;
-        case '3':
-          Serial.println("Pitch 3");
-          //pwm_cnt = 10;
-          break;
-        case '4':
-          Serial.println("Silent");
-          //pwm_cnt = 1000;
+        case 'f':
+          Serial.println("Motor Forward");
+          go_forward();
           break;
         default:
           break;
       }
   }
+}
+
+/**
+ * Moves the motors to go forward
+ */
+void go_forward() {
+  digitalWrite(RIGHT_MOTOR_DIR, HIGH);
+  digitalWrite(LEFT_MOTOR_DIR, HIGH);
+
+  analogWrite(RIGHT_MOTOR_RUN, 250);
+  analogWrite(LEFT_MOTOR_RUN, 250);
+
+  delay(1000);
+
+  analogWrite(RIGHT_MOTOR_RUN, 0);
+  analogWrite(LEFT_MOTOR_RUN, 0);  
+  digitalWrite(RIGHT_MOTOR_DIR, LOW);
+  digitalWrite(LEFT_MOTOR_DIR, LOW);
 }

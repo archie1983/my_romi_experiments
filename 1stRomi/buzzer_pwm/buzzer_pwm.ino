@@ -17,7 +17,7 @@ bool buzz_on = false;
 unsigned long time_now = 0;
 unsigned long elapsed_time = 0;
 unsigned long last_timestamp = 0;
-unsigned int pwm_cnt = 1000; // at first we'll set it to 1 tick every 1s, so that it's basically silent.
+unsigned int pwm_cnt = 100000; // at first we'll set it to 1 tick every 1s, so that it's basically silent.
 
 void loop() {
   // Implement a millis() or micros() task block
