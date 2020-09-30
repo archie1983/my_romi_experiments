@@ -63,6 +63,13 @@ void act_on_commands() {
  * @power Positive value means: go forward, negative: go back. The absolute
  * value will be used as the PWM - passed directly to analogWrite().
  * 
+ * NOTE: Deadband seems to be 0..8 both forwards and backwards for both motors. At power = 9
+ * it just barely moves, but not with lower power. 
+ * 
+ * Going forward, left motor seems to be able to move at power = 8, but only sometimes, so 
+ * I guess it has a little bit narrower deadband (but only if running in air,
+ * not on ground). Going backwards, both motors barely move at power -8 in the air, but not on ground.
+ * 
  */
 void turn_motors(int power) {
   if (power > 0) {
