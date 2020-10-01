@@ -19,7 +19,15 @@ ISR( TIMER3_COMPA_vect ) {
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  pinMode(LED, OUTPUT);
+
+  // Start Serial monitor and print "reset"
+  // so we know if the board is reseting
+  // unexpectedly.
+  Serial.begin(9600);
+  delay(1500);
+  Serial.println("***RESET***");
+  
   setupTimer3();
 }
 
@@ -47,16 +55,17 @@ void setupTimer3() {
   // For a cpu clock precaler of 256:
   // Shift a 1 up to bit CS32 (clock select, timer 3, bit 2)
   // Table 14.5 in manual. 
-  TCCR3B = TCCR3B | (1 << CS32);
-
-
+  //TCCR3B = TCCR3B | (1 << CS32);
+  TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 25Hz flash
+  
   // set compare match register to desired timer count.
   // CPU Clock  = 16000000 (16mhz).
   // Prescaler  = 256
   // Timer freq = 16000000/256 = 62500
   // We can think of this as timer3 counting up to 62500 in 1 second.
   // compare match value = 62500 / 2 (we desire 2hz).
-  OCR3A = 31250;
+  //OCR3A = 31250;
+  OCR3A = 625;//# setting the counter to 625 to achieve 25Hz flash.
 
   // enable timer compare interrupt:
   TIMSK3 = TIMSK3 | (1 << OCIE3A);
