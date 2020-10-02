@@ -1,4 +1,5 @@
-#define LED 13
+//#define LED 6 //# this is for buzzer
+#define LED 13 //# this is for LED
 
 // Global variable to remember the
 // on/off state of the LED.  
@@ -56,7 +57,8 @@ void setupTimer3() {
   // Shift a 1 up to bit CS32 (clock select, timer 3, bit 2)
   // Table 14.5 in manual. 
   //TCCR3B = TCCR3B | (1 << CS32);
-  TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 25Hz flash
+  TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
+                                               //# which we'll count to get 25Hz flash
   
   // set compare match register to desired timer count.
   // CPU Clock  = 16000000 (16mhz).
@@ -65,7 +67,7 @@ void setupTimer3() {
   // We can think of this as timer3 counting up to 62500 in 1 second.
   // compare match value = 62500 / 2 (we desire 2hz).
   //OCR3A = 31250;
-  OCR3A = 625;//# setting the counter to 625 to achieve 25Hz flash.
+  OCR3A = 625; //1; //# setting the counter to 625 to achieve 25Hz flash.
 
   // enable timer compare interrupt:
   TIMSK3 = TIMSK3 | (1 << OCIE3A);
