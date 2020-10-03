@@ -62,9 +62,9 @@ void act_on_commands() {
 /**
  * Routine to setupt timer3 to run 
  * 
- * @frequency - the desired frequency for the timer to trigger the ISR at.
+ * @desired_frequency - the desired frequency for the timer to trigger the ISR at.
  */
-void setupTimer3(int frequency) {
+void setupTimer3(int desired_frequency) {
 
   // disable global interrupts
   cli();          
@@ -122,15 +122,56 @@ void setupTimer3(int frequency) {
    * that we need to count up to. And perhaps go through all the pre-scaler frequencies and see which of the divisions is the cleanest (the least value after
    * the decimal point).
    */
-  long pre_scaled_frequencies[] = {16000000, 2000000, 250000, 62500, 16000};
-  int cnt = 0;
+  unsigned long pre_scaled_frequencies[] = {16000000, 2000000, 250000, 62500, 16000};
+  unsigned short cnt = 0;
+  
+  /**
+   * Here we'll keep the closest frequency we've gotten so far while checking them.
+   */
+  double best_candidate_frequency = 0.0;
+  unsigned short best_candidate_pre_scaler = 0;
+  unsigned int best_candidate_counter = 0;
+  double current_candidate_frequency = 0.0;
+  unsigned int current_candidate_counter = 0;
 
   for (cnt = 0; cnt < sizeof(pre_scaled_frequencies) / sizeof(long); cnt++) {
-    Serial.print("FREQ: ");
-    Serial.print(pre_scaled_frequencies[cnt]);
-    Serial.print(" : ");
-    Serial.println(sizeof(long));
+    /**
+     * So if we divide the pre-scaled frequency with the desired frequency, we'll get the counter value,
+     * but it of course has to be no more than 65536 and it has to be a whole number.
+     */
+    current_candidate_counter = round((double)pre_scaled_frequencies[cnt] / (double)desired_frequency);
+    current_candidate_frequency = (double)pre_scaled_frequencies[cnt] / current_candidate_counter;
+
+    Serial.print(" current_candidate_frequency: ");
+    Serial.print(current_candidate_frequency);
+    Serial.print(" current_candidate_counter: ");
+    Serial.println(current_candidate_counter);
+
+    //# Minimising the deviation from the desired frequency accross different pre-scale values
+    if (abs(current_candidate_frequency - desired_frequency) < abs(best_candidate_frequency - desired_frequency)) {
+
+      Serial.print(current_candidate_frequency);
+      Serial.print(" - ");
+      Serial.print(desired_frequency);
+      Serial.print(" > ");
+      Serial.print(best_candidate_frequency);
+      Serial.print(" - ");
+      Serial.println(desired_frequency);
+      
+      best_candidate_frequency = current_candidate_frequency;
+      best_candidate_pre_scaler = cnt;
+      best_candidate_counter = current_candidate_counter;
+    }
   }
+    
+  Serial.print("FREQ: desired: ");
+  Serial.print(desired_frequency);
+  Serial.print(" best found: ");
+  Serial.print(best_candidate_frequency);
+  Serial.print(" prescaler: ");
+  Serial.print(pre_scaled_frequencies[best_candidate_pre_scaler]);
+  Serial.print(" counter: ");
+  Serial.println(best_candidate_counter);
    
   TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
   OCR3A = 625; //1; //# setting the counter to 625 to achieve 25Hz flash.
