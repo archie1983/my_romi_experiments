@@ -26,7 +26,11 @@ void setup() {
   // so we know if the board is reseting
   // unexpectedly.
   Serial.begin(9600);
-  delay(1500);
+  Serial.setTimeout(100);
+
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
   Serial.println("***RESET***");
   
   setupTimer3();
@@ -34,7 +38,25 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  act_on_commands();
+}
 
+/**
+ * Reads a command from the Serial connection and acts on it
+ */
+void act_on_commands() {
+  //This line checks whether there is anything to read
+  if ( Serial.available() ) {
+    String in_cmd = Serial.readString();
+
+    if (in_cmd.indexOf("led") > -1) { //# if we want to drive the LED
+      Serial.println("Driving LED");
+    } else if(in_cmd.indexOf("motor") > -1) { //# if we want to drive the motor
+      Serial.println("Driving MOTORS");
+    } else { //# this should only be an integer value that we want to drive our LED or motor with.
+      setupTimer3(in_cmd.toInt());
+    }
+  }
 }
 
 /**
@@ -42,7 +64,7 @@ void loop() {
  * 
  * @frequency - the desired frequency for the timer to trigger the ISR at.
  */
-void setupTimer3(frequency) {
+void setupTimer3(int frequency) {
 
   // disable global interrupts
   cli();          
@@ -90,9 +112,22 @@ void setupTimer3(frequency) {
    * 110: External clock, falling edge
    * 111: External clock, rising edge.
    * 
-   * So first we'll want to find the closest frequency to the ones we've calculated here.
+   * We could just create 5 arrays of frequencies and search through them,
+   * but that would waste precious memory on a micro. So perhaps we'll better be claculating on the fly instead of stuffing RAM with these 32 bit numbers - and
+   * it will have to be 32 bit numbers, because the biggest one is 16 000 000. Another thing to remember is that our ATMEL device is only an 8-bit micro and
+   * the only reason why we can operate with 16-bit and even 32-bit numbers (and I think even 64-bit) is the fact that our compiler is clever enough to implement
+   * the byte shifting operations in the code for us behind the scenes.
+   * 
+   * Also, these are just whole number frequencies. We could just divide the pre-scaled frequency with the desired frequency and we'll get the counter value
+   * that we need to count up to. And perhaps go through all the pre-scaler frequencies and see which of the divisions is the cleanest (the least value after
+   * the decimal point).
    */
-   int[] pre1;
+  long pre_scaled_frequencies[] = {16000000, 2000000, 250000, 62500, 16000};
+  int cnt = 0;
+
+  for (cnt = 0; cnt < sizeof(pre_scaled_frequencies); cnt++) {
+    Serial.println("FREQ: " + pre_scaled_frequencies[cnt]);
+  }
    
   TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
   OCR3A = 625; //1; //# setting the counter to 625 to achieve 25Hz flash.
