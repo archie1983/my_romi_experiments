@@ -1,9 +1,12 @@
 //#define LED 6 //# this is for buzzer
 #define LED 13 //# this is for LED
+#define RIGHT_ENCODER_XOR 7
+#define RIGHT_ENCODER_PHASE_B 23
 
 // Global variable to remember the
 // on/off state of the LED.  
 volatile boolean led_state = false; //# needs to be volatile because it will be changed by the ISR and not the main loop.
+volatile int right_encoder_pulse_cnt = 0;
 
 // The ISR routine.
 // The name TIMER3_COMPA_vect is a special flag to the 
@@ -17,6 +20,29 @@ ISR( TIMER3_COMPA_vect ) {
   // Enable/disable LED
   digitalWrite(LED, led_state);
 
+}
+
+/**
+ * Right wheel encoder pin phaseA and phaseB XOR-ed. We can use that as a detection for wheel position change.
+ * We'll need to read one of the original phaseB or phaseB pins with the digitalRead() function to decide whether
+ * the movement was forward or backward.
+ */
+ISR( INT6_vect ) {
+ // ....
+ // ...ISR code - keep it short!...
+ // ....
+ right_encoder_pulse_cnt++;
+}
+
+/**
+ * Left wheel encoder pin phaseA and phaseB XOR-ed. We can use that as a detection for wheel position change.
+ * We'll need to read one of the original phaseB or phaseB pins with the digitalRead() function to decide whether
+ * the movement was forward or backward.
+ */
+ISR( PCINT4_vect ) {
+ // ....
+ // ...ISR code - keep it short!...
+ // ....
 }
 
 void setup() {
@@ -33,12 +59,67 @@ void setup() {
   }
   Serial.println("***RESET***");
   
-  setupTimer3();
+  setupTimer3(25);
+
+  // These two function set up the pin
+  // change interrupts for the encoders.
+  // If you want to know more, find them
+  // at the end of this file.  
+  setupRightEncoder();
+  //setupEncoder1();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   act_on_commands();
+  Serial.println(right_encoder_pulse_cnt);
+  delay(50);
+}
+
+/**
+ * If:
+ * 
+ * Channel A goes from LOW to HIGH
+ * and Channel B is LOW
+ * You are going CLOCKWISE!
+ * Or if:
+ * 
+ * Channel A goes from LOW to HIGH
+ * and Channel B is HIGH
+ * You are going COUNTER-CLOCKWISE!
+ */
+
+void setupRightEncoder() {
+  // Setup pins for right encoder
+  pinMode( RIGHT_ENCODER_XOR, INPUT );
+  pinMode( RIGHT_ENCODER_PHASE_B, INPUT );
+
+  // Now to set up PE6 as an external interupt (INT6), which means it can
+  // have its own dedicated ISR vector INT6_vector
+
+  // Page 90, 11.1.3 External Interrupt Mask Register – EIMSK
+  // Disable external interrupts for INT6 first
+  // Set INT6 bit low, preserve other bits
+  EIMSK = EIMSK & ~(1<<INT6);
+  //EIMSK = EIMSK & B1011111; // Same as above.
+
+  // Page 89, 11.1.2 External Interrupt Control Register B – EICRB
+  // Used to set up INT6 interrupt
+  EICRB |= (1 << ISC60) | (1 << ISC61);  // using header file names, push 1 to bit ISC60 and ISC61 to get triggered on rising edge only
+  //EICRB |= B00010000; // does same as above
+
+  // Page 90, 11.1.4 External Interrupt Flag Register – EIFR
+  // Setting a 1 in bit 6 (INTF6) clears the interrupt flag.
+  EIFR |= ( 1 << INTF6 );
+  //EIFR |= B01000000;  // same as above
+
+  // Now that we have set INT6 interrupt up, we can enable
+  // the interrupt to happen
+  // Page 90, 11.1.3 External Interrupt Mask Register – EIMSK
+  // Disable external interrupts for INT6 first
+  // Set INT6 bit high, preserve other bits
+  EIMSK |= ( 1 << INT6 );
+  //EIMSK |= B01000000; // Same as above
 }
 
 /**
@@ -142,10 +223,10 @@ void setupTimer3(long desired_frequency) {
     current_candidate_counter = round((double)pre_scaled_frequencies[cnt] / (double)desired_frequency);
     current_candidate_frequency = (double)pre_scaled_frequencies[cnt] / current_candidate_counter;
 
-//    Serial.print(" current_candidate_frequency: ");
-//    Serial.print(current_candidate_frequency);
-//    Serial.print(" current_candidate_counter: ");
-//    Serial.println(current_candidate_counter);
+    Serial.print(" current_candidate_frequency: ");
+    Serial.print(current_candidate_frequency);
+    Serial.print(" current_candidate_counter: ");
+    Serial.println(current_candidate_counter);
 
     //# Minimising the deviation from the desired frequency accross different pre-scale values
     if (abs(current_candidate_frequency - desired_frequency) < abs(best_candidate_frequency - desired_frequency) && current_candidate_counter <= 65536) {
@@ -198,46 +279,6 @@ void setupTimer3(long desired_frequency) {
     OCR3A = best_candidate_counter;
   }
    
-  // enable timer compare interrupt:
-  TIMSK3 = TIMSK3 | (1 << OCIE3A);
-
-  // enable global interrupts:
-  sei(); 
-
-}
-
-// Routine to setupt timer3 to run 
-void setupTimer3() {
-
-  // disable global interrupts
-  cli();          
-
-  // Reset timer3 to a blank condition.
-  // TCCR = Timer/Counter Control Register
-  TCCR3A = 0;     // set entire TCCR3A register to 0
-  TCCR3B = 0;     // set entire TCCR3B register to 0
-
-  // First, turn on CTC mode.  Timer3 will count up
-  // and create an interrupt on a match to a value.
-  // See table 14.4 in manual, it is mode 4.
-  TCCR3B = TCCR3B | (1 << WGM32);
-
-  // For a cpu clock precaler of 256:
-  // Shift a 1 up to bit CS32 (clock select, timer 3, bit 2)
-  // Table 14.5 in manual. 
-  //TCCR3B = TCCR3B | (1 << CS32);
-  TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
-                                               //# which we'll count to get 25Hz flash
-  
-  // set compare match register to desired timer count.
-  // CPU Clock  = 16000000 (16mhz).
-  // Prescaler  = 256
-  // Timer freq = 16000000/256 = 62500
-  // We can think of this as timer3 counting up to 62500 in 1 second.
-  // compare match value = 62500 / 2 (we desire 2hz).
-  //OCR3A = 31250;
-  OCR3A = 625; //1; //# setting the counter to 625 to achieve 25Hz flash.
-
   // enable timer compare interrupt:
   TIMSK3 = TIMSK3 | (1 << OCIE3A);
 
