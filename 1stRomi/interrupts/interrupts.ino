@@ -64,7 +64,7 @@ void act_on_commands() {
  * 
  * @desired_frequency - the desired frequency for the timer to trigger the ISR at.
  */
-void setupTimer3(int desired_frequency) {
+void setupTimer3(long desired_frequency) {
 
   // disable global interrupts
   cli();          
@@ -142,21 +142,21 @@ void setupTimer3(int desired_frequency) {
     current_candidate_counter = round((double)pre_scaled_frequencies[cnt] / (double)desired_frequency);
     current_candidate_frequency = (double)pre_scaled_frequencies[cnt] / current_candidate_counter;
 
-    Serial.print(" current_candidate_frequency: ");
-    Serial.print(current_candidate_frequency);
-    Serial.print(" current_candidate_counter: ");
-    Serial.println(current_candidate_counter);
+//    Serial.print(" current_candidate_frequency: ");
+//    Serial.print(current_candidate_frequency);
+//    Serial.print(" current_candidate_counter: ");
+//    Serial.println(current_candidate_counter);
 
     //# Minimising the deviation from the desired frequency accross different pre-scale values
-    if (abs(current_candidate_frequency - desired_frequency) < abs(best_candidate_frequency - desired_frequency)) {
+    if (abs(current_candidate_frequency - desired_frequency) < abs(best_candidate_frequency - desired_frequency) && current_candidate_counter <= 65536) {
 
-      Serial.print(current_candidate_frequency);
-      Serial.print(" - ");
-      Serial.print(desired_frequency);
-      Serial.print(" > ");
-      Serial.print(best_candidate_frequency);
-      Serial.print(" - ");
-      Serial.println(desired_frequency);
+//      Serial.print(current_candidate_frequency);
+//      Serial.print(" - ");
+//      Serial.print(desired_frequency);
+//      Serial.print(" > ");
+//      Serial.print(best_candidate_frequency);
+//      Serial.print(" - ");
+//      Serial.println(desired_frequency);
       
       best_candidate_frequency = current_candidate_frequency;
       best_candidate_pre_scaler = cnt;
@@ -172,10 +172,32 @@ void setupTimer3(int desired_frequency) {
   Serial.print(pre_scaled_frequencies[best_candidate_pre_scaler]);
   Serial.print(" counter: ");
   Serial.println(best_candidate_counter);
-   
-  TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
-  OCR3A = 625; //1; //# setting the counter to 625 to achieve 25Hz flash.
 
+  /*
+   * Now let's load the registers with the found values.
+   */
+  if (best_candidate_frequency > 0) {
+    switch (best_candidate_pre_scaler) {
+      case 0:
+        TCCR3B = TCCR3B | (1 << CS30); //# no prescaling
+        break;
+      case 1:
+        TCCR3B = TCCR3B | (1 << CS31); //# /8 prescaling
+        break;
+      case 2:
+        TCCR3B = TCCR3B | (1 << CS31) | (1 << CS30); //# /64 prescaling
+        break;
+      case 3:
+        TCCR3B = TCCR3B | (1 << CS32); //# /256 prescaling
+        break;
+      case 4:
+        TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# /1024 prescaling
+        break;
+    }
+
+    OCR3A = best_candidate_counter;
+  }
+   
   // enable timer compare interrupt:
   TIMSK3 = TIMSK3 | (1 << OCIE3A);
 
