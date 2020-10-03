@@ -125,8 +125,11 @@ void setupTimer3(int frequency) {
   long pre_scaled_frequencies[] = {16000000, 2000000, 250000, 62500, 16000};
   int cnt = 0;
 
-  for (cnt = 0; cnt < sizeof(pre_scaled_frequencies); cnt++) {
-    Serial.println("FREQ: " + pre_scaled_frequencies[cnt]);
+  for (cnt = 0; cnt < sizeof(pre_scaled_frequencies) / sizeof(long); cnt++) {
+    Serial.print("FREQ: ");
+    Serial.print(pre_scaled_frequencies[cnt]);
+    Serial.print(" : ");
+    Serial.println(sizeof(long));
   }
    
   TCCR3B = TCCR3B | (1 << CS32) | (1 << CS30); //# setting pre-scaler to 1024 so that we get 16kHz clock 
