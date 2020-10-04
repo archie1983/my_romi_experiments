@@ -23,15 +23,75 @@ ISR( TIMER3_COMPA_vect ) {
 }
 
 /**
+ * To avoid reading the pins twice- for each comparison, we'll read them once and store in these variables.
+ */
+volatile boolean right_encoder_xored_signal = false;
+volatile boolean right_encoder_phase_b_signal = false;
+volatile boolean right_encoder_phase_b_signal_prev = false;
+volatile boolean right_encoder_phase_a_signal = false; //# we'll be inferring this 
+volatile boolean right_encoder_phase_a_signal_prev = false; //# we'll be inferring this 
+/**
  * Right wheel encoder pin phaseA and phaseB XOR-ed. We can use that as a detection for wheel position change.
  * We'll need to read one of the original phaseB or phaseB pins with the digitalRead() function to decide whether
  * the movement was forward or backward.
  */
 ISR( INT6_vect ) {
- // ....
- // ...ISR code - keep it short!...
- // ....
- right_encoder_pulse_cnt++;
+/**
+ * From the lecture notes:
+ * If:
+ * 
+ * Channel A goes from LOW to HIGH
+ * and Channel B is LOW
+ * You are going CLOCKWISE!
+ * Or if:
+ * 
+ * Channel A goes from LOW to HIGH
+ * and Channel B is HIGH
+ * You are going COUNTER-CLOCKWISE!
+ * 
+ * Our PhaseA is XOR-ed with the phaseB, so we're getting 1-signale when A=1 and B=0 and also when A=0 and B=1
+ * and in no other cases. Also our pin interrupt fires on both-rising edge and falling edge. That means the
+ * following:
+ * 
+ * -> If we triggered on XOR-ed downwards edge, then:
+ * 1) if A==0, then ignore
+ * 2) if A==1 and B==1, then we're coing CCW
+ * 
+ * Of course if we got XOR down and B==1, then A must be 1 too. So we simplify this to this:
+ * 1) If we triggered on XOR-ed downwards edge and B==1, then we're going CCW.
+ * 
+ * Similarly for CW:
+ * -> If we triggered on XOR-ed upwards edge, then:
+ * 1) if A==0, then ignore
+ * 2) if A==1 and B==0, then we're coing CW
+ * 
+ * Of course if we got XOR up and B==0, then A must be 1. So we simiplify this to this:
+ * 1) If we triggered on XOR-ed upwards edge and B==0, then we're going CW.
+ * 
+ * So all we need is the current value of the XOR-ed signal and the current value of phaseB signal.
+ */
+
+  /*
+   * Reading the actual current signals
+   */
+  right_encoder_phase_b_signal = digitalRead(RIGHT_ENCODER_PHASE_B);
+  right_encoder_xored_signal = digitalRead(RIGHT_ENCODER_XOR);
+
+  /*
+   * Inferring the phase A current state from the two signals above.
+   */
+  right_encoder_phase_a_signal = right_encoder_phase_b_signal ^ right_encoder_xored_signal;
+
+  /**
+   * If we've seen a transition of phase A from 0 to 1
+   * AND phase B==0, then we're going CW
+   */
+  if (!right_encoder_phase_a_signal_prev && right_encoder_phase_a_signal && !right_encoder_phase_b_signal) {
+    right_encoder_pulse_cnt++; //# going CW
+  } else if (!right_encoder_phase_a_signal_prev && right_encoder_phase_a_signal && right_encoder_phase_b_signal) {
+    right_encoder_pulse_cnt--; //# going CW
+  }
+  right_encoder_phase_a_signal_prev = right_encoder_phase_a_signal;
 }
 
 /**
@@ -76,19 +136,6 @@ void loop() {
   delay(50);
 }
 
-/**
- * If:
- * 
- * Channel A goes from LOW to HIGH
- * and Channel B is LOW
- * You are going CLOCKWISE!
- * Or if:
- * 
- * Channel A goes from LOW to HIGH
- * and Channel B is HIGH
- * You are going COUNTER-CLOCKWISE!
- */
-
 void setupRightEncoder() {
   // Setup pins for right encoder
   pinMode( RIGHT_ENCODER_XOR, INPUT );
@@ -105,7 +152,8 @@ void setupRightEncoder() {
 
   // Page 89, 11.1.2 External Interrupt Control Register B – EICRB
   // Used to set up INT6 interrupt
-  EICRB |= (1 << ISC60) | (1 << ISC61);  // using header file names, push 1 to bit ISC60 and ISC61 to get triggered on rising edge only
+  //EICRB |= (1 << ISC60) | (1 << ISC61);  // using header file names, push 1 to bit ISC60 and ISC61 to get triggered on rising edge only
+  EICRB |= (1 << ISC60);  // using header file names, push 1 to bit ISC60 to get triggered on both rising and falling edges.
   //EICRB |= B00010000; // does same as above
 
   // Page 90, 11.1.4 External Interrupt Flag Register – EIFR
