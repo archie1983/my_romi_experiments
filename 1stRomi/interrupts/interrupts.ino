@@ -2,11 +2,14 @@
 #define LED 13 //# this is for LED
 #define RIGHT_ENCODER_XOR 7
 #define RIGHT_ENCODER_PHASE_B 23
+#define LEFT_ENCODER_XOR 8
+//#define LEFT_ENCODER_PHASE_B 33
 
 // Global variable to remember the
 // on/off state of the LED.  
 volatile boolean led_state = false; //# needs to be volatile because it will be changed by the ISR and not the main loop.
 volatile int right_encoder_pulse_cnt = 0;
+volatile int left_encoder_pulse_cnt = 0;
 
 // The ISR routine.
 // The name TIMER3_COMPA_vect is a special flag to the 
@@ -24,12 +27,23 @@ ISR( TIMER3_COMPA_vect ) {
 
 /**
  * To avoid reading the pins twice- for each comparison, we'll read them once and store in these variables.
+ * Also we'll need to infer phaseA state and keep its previous value to be able to count steps.
  */
 volatile boolean right_encoder_xored_signal = false;
 volatile boolean right_encoder_phase_b_signal = false;
 volatile boolean right_encoder_phase_b_signal_prev = false;
 volatile boolean right_encoder_phase_a_signal = false; //# we'll be inferring this 
 volatile boolean right_encoder_phase_a_signal_prev = false; //# we'll be inferring this 
+
+/**
+ * Ditto for left encoder.
+ */
+volatile boolean left_encoder_xored_signal = false;
+volatile boolean left_encoder_phase_b_signal = false;
+volatile boolean left_encoder_phase_b_signal_prev = false;
+volatile boolean left_encoder_phase_a_signal = false; //# we'll be inferring this 
+volatile boolean left_encoder_phase_a_signal_prev = false; //# we'll be inferring this 
+
 /**
  * Right wheel encoder pin phaseA and phaseB XOR-ed. We can use that as a detection for wheel position change.
  * We'll need to read one of the original phaseB or phaseB pins with the digitalRead() function to decide whether
@@ -68,7 +82,10 @@ ISR( INT6_vect ) {
  * Of course if we got XOR up and B==0, then A must be 1. So we simiplify this to this:
  * 1) If we triggered on XOR-ed upwards edge and B==0, then we're going CW.
  * 
- * So all we need is the current value of the XOR-ed signal and the current value of phaseB signal.
+ * So all we need is the current value of the XOR-ed signal and the current value of phaseB signal. <- Ha, ha, that didn't work, because we're triggering
+ * on the XOR-ed signal both edges and the CCW conditions qualify right after the CW have. 
+ * 
+ * Next approach below.
  */
 
   /*
@@ -99,10 +116,37 @@ ISR( INT6_vect ) {
  * We'll need to read one of the original phaseB or phaseB pins with the digitalRead() function to decide whether
  * the movement was forward or backward.
  */
-ISR( PCINT4_vect ) {
- // ....
- // ...ISR code - keep it short!...
- // ....
+ISR( PCINT0_vect ) {
+  /*
+   * Reading the actual current signals
+   */
+  left_encoder_xored_signal = digitalRead(LEFT_ENCODER_XOR);
+
+  // Now the phaseB signal.
+  // Mask for a specific pin from the port.
+  // Non-standard pin, so we access the register
+  // directly.  
+  // Reading just PINE would give us a number
+  // composed of all 8 bits.  We want only bit 2.
+  // B00000100 masks out all but bit 2
+  left_encoder_phase_b_signal = PINE & (1<<PINE2);
+  //boolean newE0_B = PINE & B00000100;  // Does same as above.
+
+  /*
+   * Inferring the phase A current state from the two signals above.
+   */
+  left_encoder_phase_a_signal = left_encoder_phase_b_signal ^ left_encoder_xored_signal;
+
+  /**
+   * If we've seen a transition of phase A from 0 to 1
+   * AND phase B==0, then we're going CW
+   */
+  if (!left_encoder_phase_a_signal_prev && left_encoder_phase_a_signal && !left_encoder_phase_b_signal) {
+    left_encoder_pulse_cnt++; //# going CW
+  } else if (!left_encoder_phase_a_signal_prev && left_encoder_phase_a_signal && left_encoder_phase_b_signal) {
+    left_encoder_pulse_cnt--; //# going CW
+  }
+  left_encoder_phase_a_signal_prev = left_encoder_phase_a_signal;
 }
 
 void setup() {
@@ -126,12 +170,14 @@ void setup() {
   // If you want to know more, find them
   // at the end of this file.  
   setupRightEncoder();
-  //setupEncoder1();
+  setupLeftEncoder();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   act_on_commands();
+  Serial.print(left_encoder_pulse_cnt);
+  Serial.print(",");
   Serial.println(right_encoder_pulse_cnt);
   delay(50);
 }
@@ -168,6 +214,58 @@ void setupRightEncoder() {
   // Set INT6 bit high, preserve other bits
   EIMSK |= ( 1 << INT6 );
   //EIMSK |= B01000000; // Same as above
+}
+
+void setupLeftEncoder() {
+    // Setting up LEFT_ENCODER_XOR:
+    // The Romi board uses the pin PE2 (port E, pin 2) which is
+    // very unconventional.  It doesn't have a standard
+    // arduino alias (like d6, or a5, for example).
+    // We set it up here with direct register access
+    // Writing a 0 to a DDR sets as input
+    // DDRE = Data Direction Register (Port)E
+    // We want pin PE2, which means bit 2 (counting from 0)
+    // PE Register bits [ 7  6  5  4  3  2  1  0 ]
+    // Binary mask      [ 1  1  1  1  1  0  1  1 ]
+    //    
+    // By performing an & here, the 0 sets low, all 1's preserve
+    // any previous state.
+    DDRE = DDRE & ~(1<<DDE6);
+    //DDRE = DDRE & B11111011; // Same as above. 
+
+    // We need to enable the pull up resistor for the pin
+    // To do this, once a pin is set to input (as above)
+    // You write a 1 to the bit in the output register
+    PORTE = PORTE | (1<< PORTE2 );
+    //PORTE = PORTE | 0B00000100;
+
+    // Left encoder uses conventional pin 26
+    pinMode(LEFT_ENCODER_XOR, INPUT);
+    digitalWrite(LEFT_ENCODER_XOR, HIGH); // Encoder 0 xor
+
+    // Enable pin-change interrupt on A8 (PB4) for left encoder, and disable other
+    // pin-change interrupts.
+    // Note, this register will normally create an interrupt a change to any pins
+    // on the port, but we use PCMSK0 to set it only for PCINT4 which is A8 (PB4)
+    // When we set these registers, the compiler will now look for a routine called
+    // ISR( PCINT0_vect ) when it detects a change on the pin.  PCINT0 seems like a
+    // mismatch to PCINT4, however there is only the one vector servicing a change
+    // to all PCINT0->7 pins.
+    // See Manual 11.1.5 Pin Change Interrupt Control Register - PCICR
+
+    // Page 91, 11.1.5, Pin Change Interrupt Control Register 
+    // Disable interrupt first
+    PCICR = PCICR & ~( 1 << PCIE0 );
+    // PCICR &= B11111110;  // Same as above
+
+    // 11.1.7 Pin Change Mask Register 0 – PCMSK0
+    PCMSK0 |= (1 << PCINT4);
+
+    // Page 91, 11.1.6 Pin Change Interrupt Flag Register – PCIFR
+    PCIFR |= (1 << PCIF0);  // Clear its interrupt flag by writing a 1.
+
+    // Enable
+    PCICR |= (1 << PCIE0);
 }
 
 /**
