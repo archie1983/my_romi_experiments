@@ -11,7 +11,7 @@ class LineSensor {
     /**
      * Constructor will take in one pin, which is an ADC pin on the Atmel microcontroller.
      */
-    LineSensor(unsigned short pin) {
+    LineSensor(byte pin) {
 //      Serial.print("Setting up line sensor pin: ");
 //      Serial.println(pin);
       if (initialisedSensors >= LINE_SENSOR_COUNT) {
@@ -19,9 +19,11 @@ class LineSensor {
       } else {
         adc_pin = pin;
         pinMode(adc_pin, INPUT);
-        initialiseTimer3(1);
-        allLineSensors[initialisedSensors] = *this;
+        initialiseTimer3(LINE_SENSOR_UPDATE_FREQUENCY);
+        allLineSensors[initialisedSensors] = this;
         initialisedSensors++;
+        outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT;
+        bias = 0;
       }
     }
 
@@ -30,7 +32,7 @@ class LineSensor {
      */
     static void updateAllInitialisedSensors() {
       for(int i = 0; i < initialisedSensors; i++) {
-        allLineSensors[i].readCurrentValue();
+        allLineSensors[i]->readCurrentValue();
       }
     }
 
@@ -49,7 +51,7 @@ class LineSensor {
      * A reference collection of all the sensors, so that we know what to update
      * in timer3.
      */
-    static LineSensor* allLineSensors;
+    static LineSensor* allLineSensors[LINE_SENSOR_COUNT];
 
     /**
      * How many sensors have been initialised.
@@ -59,7 +61,18 @@ class LineSensor {
     /**
      * Current reading of the sensor.
      */
-    unsigned int currentReading;
+    volatile unsigned int currentReading;
+
+    /**
+     * A number of outstanding calibration values - if this is above 0,
+     * then we're still calibrating.
+     */
+    volatile int outstanding_calibration_values;
+
+    /**
+     * Bias calculated in calibration process.
+     */
+    volatile unsigned long bias;
 
     /**
      * A function to initialise timer3 to start the measurements.
@@ -71,8 +84,33 @@ class LineSensor {
      */
     void readCurrentValue() {
       currentReading = analogRead(adc_pin);
-      Serial.print( currentReading );
-      Serial.print( ", " );
+
+      /**
+       * Making sure that first values will be used to calibrate the sensor.
+       */
+      if (outstanding_calibration_values > 0) {
+        bias += currentReading;
+        outstanding_calibration_values--;
+//        Serial.print(adc_pin);
+//        Serial.print(" : outstanding_calibration_values=");
+//        Serial.println(outstanding_calibration_values);
+      } else if(outstanding_calibration_values == 0) {
+        bias = long(bias / double(LINE_SENSOR_CALIBRATION_VALUE_COUNT));
+        outstanding_calibration_values--;
+//        Serial.print(adc_pin);
+//        Serial.print(" : bias=");
+//        Serial.print(bias);
+      } else {
+        Serial.print(adc_pin);
+        Serial.print(": ");
+        Serial.print(currentReading);
+        Serial.print(",");
+        Serial.print(currentReading - bias);
+        Serial.print(",");
+        Serial.println(bias);
+      }
+      //Serial.print( outstanding_calibration_values );
+      //Serial.print( ", " );
     }
 };
 
@@ -85,7 +123,7 @@ byte LineSensor::initialisedSensors = 0;
 /**
  * We'll need space for the line sensor references.
  */
-LineSensor* LineSensor::allLineSensors = malloc(LINE_SENSOR_COUNT * sizeof(LineSensor));
+LineSensor* LineSensor::allLineSensors[LINE_SENSOR_COUNT];
 
 /**
  * We'll use timer3 to read the sensors.
@@ -99,7 +137,7 @@ ISR( TIMER3_COMPA_vect ) {
    * Let's update all initialised sensors.
    */
   LineSensor::updateAllInitialisedSensors();
-  Serial.print( "\n" );
+  //Serial.print( "\n" );
 }
 
 /**
