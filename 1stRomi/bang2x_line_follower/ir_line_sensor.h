@@ -81,6 +81,10 @@ class LineSensor {
  */
 bool LineSensor::timer_initialised = false;
 byte LineSensor::initialisedSensors = 0;
+
+/**
+ * We'll need space for the line sensor references.
+ */
 LineSensor* LineSensor::allLineSensors = malloc(LINE_SENSOR_COUNT * sizeof(LineSensor));
 
 /**
