@@ -1,4 +1,4 @@
-#include "pin_names.h"
+#include "pin_names_and_constants.h"
 #include "ir_line_sensor.h"
 
 void setup() {

@@ -1,3 +1,5 @@
+#include "pin_names_and_constants.h"
+
 /**
  * This class will be responsible for reading one of the IR sensors,
  * calibrating it and providing usable values of the reading. The value
@@ -10,21 +12,76 @@ class LineSensor {
      * Constructor will take in one pin, which is an ADC pin on the Atmel microcontroller.
      */
     LineSensor(unsigned short pin) {
-      Serial.print("Setting up line sensor pin: ");
-      Serial.println(pin);
-      adc_pin = pin;
-      pinMode(adc_pin, INPUT);
-      initialiseTimer3(1);
+//      Serial.print("Setting up line sensor pin: ");
+//      Serial.println(pin);
+      if (initialisedSensors >= LINE_SENSOR_COUNT) {
+        Serial.println("Attempting to initialise too many line sensors. Please check your code.");
+      } else {
+        adc_pin = pin;
+        pinMode(adc_pin, INPUT);
+        initialiseTimer3(1);
+        allLineSensors[initialisedSensors] = *this;
+        initialisedSensors++;
+      }
+    }
+
+    /**
+     * Take in a fresh reading for each initialised sensor.
+     */
+    static void updateAllInitialisedSensors() {
+      for(int i = 0; i < initialisedSensors; i++) {
+        allLineSensors[i].readCurrentValue();
+      }
     }
 
   private:
-    unsigned short adc_pin;
+    /**
+     * The ADC pin that this sensor will use.
+     */
+    byte adc_pin;
+
+    /**
+     * A flag of whether the sensor has been initialised.
+     */
     static bool timer_initialised;
 
+    /**
+     * A reference collection of all the sensors, so that we know what to update
+     * in timer3.
+     */
+    static LineSensor* allLineSensors;
+
+    /**
+     * How many sensors have been initialised.
+     */
+    static byte initialisedSensors;
+
+    /**
+     * Current reading of the sensor.
+     */
+    unsigned int currentReading;
+
+    /**
+     * A function to initialise timer3 to start the measurements.
+     */
     void initialiseTimer3(long desired_frequency);
+
+    /**
+     * A function to read the current ADC sensor value.
+     */
+    void readCurrentValue() {
+      currentReading = analogRead(adc_pin);
+      Serial.print( currentReading );
+      Serial.print( ", " );
+    }
 };
 
+/*
+ * In the beginning timer is NOT initialised and no sensors have been initialised.
+ */
 bool LineSensor::timer_initialised = false;
+byte LineSensor::initialisedSensors = 0;
+LineSensor* LineSensor::allLineSensors = malloc(LINE_SENSOR_COUNT * sizeof(LineSensor));
 
 /**
  * We'll use timer3 to read the sensors.
@@ -34,23 +91,10 @@ bool LineSensor::timer_initialised = false;
  * CTC mode.
  */
 ISR( TIMER3_COMPA_vect ) {
-  // To store result.
-  int l_value; // left sensor
-  int c_value; // centre sensor
-  int r_value; // right sensor
-
-  // Read analog voltages
-  l_value = analogRead( LINE_LEFT_PIN );
-  c_value = analogRead( LINE_CENTRE_PIN );
-  r_value = analogRead( LINE_RIGHT_PIN );
-
-  // To send data back to your computer.
-  // You can open either Serial monitor or plotter.
-  Serial.print( l_value );
-  Serial.print( ", " );
-  Serial.print( c_value );
-  Serial.print( ", " );
-  Serial.print( r_value );
+  /*
+   * Let's update all initialised sensors.
+   */
+  LineSensor::updateAllInitialisedSensors();
   Serial.print( "\n" );
 }
 
@@ -64,7 +108,7 @@ void LineSensor::initialiseTimer3(long desired_frequency) {
    * We only want to initialise this once.
    */
   if (!LineSensor::timer_initialised) {
-    Serial.print("Setting timer for sensor readings");
+    //Serial.print("Setting timer for sensor readings");
     LineSensor::timer_initialised = true;
 
     // disable global interrupts
