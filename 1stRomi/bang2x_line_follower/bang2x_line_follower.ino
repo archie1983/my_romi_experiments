@@ -2,10 +2,6 @@
 #include "ir_line_sensor.h"
 #include "motor.h"
 
-LineSensor line_left(LINE_LEFT_PIN);
-LineSensor line_centre(LINE_CENTRE_PIN);
-LineSensor line_right(LINE_RIGHT_PIN);
-
 void setup() {
   // Start Serial monitor and print "reset"
   // so we know if the board is reseting
@@ -23,23 +19,23 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(300);
 
-  if (line_right.overLine()) {
+  if (LineSensor::getRightSensor()->overLine()) {
     Serial.println("Right sensor over line");
   }
   
-  if (line_centre.overLine()) {
+  if (LineSensor::getCentreSensor()->overLine()) {
     Serial.println("Centre sensor over line");
   }
 
-  if (line_left.overLine()) {
+  if (LineSensor::getLeftSensor()->overLine()) {
     Serial.println("Left sensor over line");
   }
 
-  Serial.print(line_right.getCurrentSensorValue());
+  Serial.print(LineSensor::getRightSensor()->getCurrentSensorValue());
   Serial.print(", ");
-  Serial.print(line_centre.getCurrentSensorValue());
+  Serial.print(LineSensor::getCentreSensor()->getCurrentSensorValue());
   Serial.print(", ");
-  Serial.print(line_left.getCurrentSensorValue());
+  Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
   Serial.println("");
 
   act_on_commands();

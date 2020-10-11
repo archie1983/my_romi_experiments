@@ -6,17 +6,6 @@
 class Motor {
   public:
     /**
-     * Constructor with a set of pins- directions and run control for the motor
-     */
-    Motor(byte pinDirection, byte pinRun) {
-      this->pinDirection = pinDirection;
-      this->pinRun = pinRun;
-
-      pinMode(pinDirection, OUTPUT);
-      pinMode(pinRun, OUTPUT);
-    }
-
-    /**
      * Runs the motor forward for 1 second at half PWM power.
      */
     void goForward_1Second() {
@@ -34,6 +23,19 @@ class Motor {
     }
   
   private:
+    /**
+     * Constructor with a set of pins- directions and run control for the motor.
+     * It doesn't have to be public, because we'll only create instances of motor
+     * within motor.h and those instances will be available through a static function.
+     */
+    Motor(byte pinDirection, byte pinRun) {
+      this->pinDirection = pinDirection;
+      this->pinRun = pinRun;
+
+      pinMode(pinDirection, OUTPUT);
+      pinMode(pinRun, OUTPUT);
+    }
+    
     /**
      * References of the left motor and the right motor. We'll initialise them too within motor.h
      * and they will be available through a public static function.
@@ -94,5 +96,8 @@ class Motor {
     }
 };
 
+/**
+ * Instantiating our motors.
+ */
 Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN);
 Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN);

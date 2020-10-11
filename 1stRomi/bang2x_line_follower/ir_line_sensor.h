@@ -9,25 +9,6 @@ class LineSensor {
   public:
 
     /**
-     * Constructor will take in one pin, which is an ADC pin on the Atmel microcontroller.
-     */
-    LineSensor(byte pin) {
-//      Serial.print("Setting up line sensor pin: ");
-//      Serial.println(pin);
-      if (initialisedSensors >= LINE_SENSOR_COUNT) {
-        Serial.println("Attempting to initialise too many line sensors. Please check your code.");
-      } else {
-        adc_pin = pin;
-        pinMode(adc_pin, INPUT);
-        initialiseTimer3(LINE_SENSOR_UPDATE_FREQUENCY);
-        allLineSensors[initialisedSensors] = this; //# keeping track of this sensor instance
-        initialisedSensors++;
-        outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT; //# we'll need to calibrate it for the full amount of cailbration values
-        bias = 0;
-      }
-    }
-
-    /**
      * Returns the current sensor value compensated for the bias.
      */
     unsigned int getCurrentSensorValue() {
@@ -65,7 +46,41 @@ class LineSensor {
       }
     }
 
+    static LineSensor* getRightSensor() {
+      return rightSensor;
+    }
+
+    static LineSensor* getCentreSensor() {
+      return centreSensor;
+    }
+
+    static LineSensor* getLeftSensor() {
+      return leftSensor;
+    }
+
   private:
+
+    /**
+     * Constructor will take in one pin, which is an ADC pin on the Atmel microcontroller.
+     * It doesn't have to be public, because we'll only create instances of sensor
+     * within ir_line_sensor.h and those instances will be available through a static function.
+     */
+    LineSensor(byte pin) {
+//      Serial.print("Setting up line sensor pin: ");
+//      Serial.println(pin);
+      if (initialisedSensors >= LINE_SENSOR_COUNT) {
+        Serial.println("Attempting to initialise too many line sensors. Please check your code.");
+      } else {
+        adc_pin = pin;
+        pinMode(adc_pin, INPUT);
+        initialiseTimer3(LINE_SENSOR_UPDATE_FREQUENCY);
+        allLineSensors[initialisedSensors] = this; //# keeping track of this sensor instance
+        initialisedSensors++;
+        outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT; //# we'll need to calibrate it for the full amount of cailbration values
+        bias = 0;
+      }
+    }
+    
     /**
      * The ADC pin that this sensor will use.
      */
@@ -81,6 +96,14 @@ class LineSensor {
      * in timer3.
      */
     static LineSensor* allLineSensors[LINE_SENSOR_COUNT];
+
+    /**
+     * Named references of each sensor. We'll initialise them too within ir_line_sensor.h
+     * and they will be available through a public static function.
+     */
+    static LineSensor* leftSensor;
+    static LineSensor* centreSensor;
+    static LineSensor* rightSensor;
 
     /**
      * How many sensors have been initialised.
@@ -156,6 +179,13 @@ byte LineSensor::initialisedSensors = 0;
  * We'll need space for the line sensor references.
  */
 LineSensor* LineSensor::allLineSensors[LINE_SENSOR_COUNT];
+
+/**
+ * Instantiating our sensors.
+ */
+LineSensor* LineSensor::rightSensor = new LineSensor(LINE_RIGHT_PIN);
+LineSensor* LineSensor::centreSensor = new LineSensor(LINE_CENTRE_PIN);
+LineSensor* LineSensor::leftSensor = new LineSensor(LINE_LEFT_PIN);
 
 /**
  * We'll use timer3 to read the sensors.
