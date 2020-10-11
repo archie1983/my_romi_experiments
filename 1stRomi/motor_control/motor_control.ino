@@ -83,7 +83,7 @@ void turn_motors(int power) {
   /**
    * If we don't take abs value here, then it looks like values greater than 255 overflow
    * and negative values are treated as unsigned byte, rather than a negative value, 
-   * so -1 will come out as 255. Looks like abs function takes in a paramater of unsigned byte.
+   * so -1 will come out as 255. Looks like analogWrite function takes in a paramater of unsigned byte.
    */
   analogWrite(RIGHT_MOTOR_RUN, abs(power));
   analogWrite(LEFT_MOTOR_RUN, abs(power));

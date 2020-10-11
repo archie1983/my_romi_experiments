@@ -1,5 +1,6 @@
 #include "pin_names_and_constants.h"
 #include "ir_line_sensor.h"
+#include "motor.h"
 
 LineSensor line_left(LINE_LEFT_PIN);
 LineSensor line_centre(LINE_CENTRE_PIN);
@@ -40,4 +41,24 @@ void loop() {
   Serial.print(", ");
   Serial.print(line_left.getCurrentSensorValue());
   Serial.println("");
+
+  act_on_commands();
+}
+
+/**
+ * Reads a command from the Serial connection and acts on it
+ */
+void act_on_commands() {
+  //This line checks whether there is anything to read
+  if ( Serial.available() ) {
+    String in_cmd = Serial.readString();
+
+    if (in_cmd.indexOf("left") > -1) { //# if we want to drive the LED
+      Serial.println("Driving LEFT motor");
+      Motor::getLeftMotor()->goForward_1Second();
+    } else if(in_cmd.indexOf("right") > -1) { //# if we want to drive the motor
+      Serial.println("Driving RIGHT motor");
+      Motor::getRightMotor()->goForward_1Second();
+    }
+  }
 }
