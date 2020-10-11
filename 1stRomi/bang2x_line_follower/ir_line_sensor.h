@@ -20,11 +20,29 @@ class LineSensor {
         adc_pin = pin;
         pinMode(adc_pin, INPUT);
         initialiseTimer3(LINE_SENSOR_UPDATE_FREQUENCY);
-        allLineSensors[initialisedSensors] = this;
+        allLineSensors[initialisedSensors] = this; //# keeping track of this sensor instance
         initialisedSensors++;
-        outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT;
+        outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT; //# we'll need to calibrate it for the full amount of cailbration values
         bias = 0;
       }
+    }
+
+    /**
+     * Returns the current sensor value compensated for the bias.
+     */
+    unsigned int getCurrentSensorValue() {
+      if (currentReading > bias) {
+        return currentReading - bias;
+      } else {
+        return 0;
+      }
+    }
+
+    /**
+     * Returns the current sensor value as is, with no bias compensation.
+     */
+    unsigned int getCurrentSensorValueRaw() {
+      return currentReading;
     }
 
     /**
@@ -32,6 +50,10 @@ class LineSensor {
      */
     static void updateAllInitialisedSensors() {
       for(int i = 0; i < initialisedSensors; i++) {
+        /**
+         * Notice how we use an "->" instead of "." to reference a function in the class - that's because
+         * we're accessing the class via a pointer reference.
+         */
         allLineSensors[i]->readCurrentValue();
       }
     }
@@ -94,20 +116,23 @@ class LineSensor {
 //        Serial.print(adc_pin);
 //        Serial.print(" : outstanding_calibration_values=");
 //        Serial.println(outstanding_calibration_values);
-      } else if(outstanding_calibration_values == 0) {
+      } else if(outstanding_calibration_values == 0) { 
+        /**
+         * Enough calibration values have been read, we can now calculate the bias.
+         */
         bias = long(bias / double(LINE_SENSOR_CALIBRATION_VALUE_COUNT));
         outstanding_calibration_values--;
 //        Serial.print(adc_pin);
 //        Serial.print(" : bias=");
 //        Serial.print(bias);
       } else {
-        Serial.print(adc_pin);
-        Serial.print(": ");
-        Serial.print(currentReading);
-        Serial.print(",");
-        Serial.print(currentReading - bias);
-        Serial.print(",");
-        Serial.println(bias);
+//        Serial.print(adc_pin);
+//        Serial.print(": ");
+//        Serial.print(currentReading);
+//        Serial.print(",");
+//        Serial.print(getCurrentSensorValue());
+//        Serial.print(",");
+//        Serial.println(bias);
       }
       //Serial.print( outstanding_calibration_values );
       //Serial.print( ", " );
