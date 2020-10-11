@@ -21,6 +21,23 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   delay(300);
-  Serial.print("Centre sensor: ");
-  Serial.println(line_centre.getCurrentSensorValue());
+
+  if (line_right.overLine()) {
+    Serial.println("Right sensor over line");
+  }
+  
+  if (line_centre.overLine()) {
+    Serial.println("Centre sensor over line");
+  }
+
+  if (line_left.overLine()) {
+    Serial.println("Left sensor over line");
+  }
+
+  Serial.print(line_right.getCurrentSensorValue());
+  Serial.print(", ");
+  Serial.print(line_centre.getCurrentSensorValue());
+  Serial.print(", ");
+  Serial.print(line_left.getCurrentSensorValue());
+  Serial.println("");
 }

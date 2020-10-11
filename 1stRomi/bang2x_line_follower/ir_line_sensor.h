@@ -46,6 +46,13 @@ class LineSensor {
     }
 
     /**
+     * Returns a flag of whether the sensor is above a line or not.
+     */
+    bool overLine() {
+      return getCurrentSensorValue() > 500;
+    }
+
+    /**
      * Take in a fresh reading for each initialised sensor.
      */
     static void updateAllInitialisedSensors() {
