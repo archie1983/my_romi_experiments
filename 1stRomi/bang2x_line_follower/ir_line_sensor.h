@@ -1,3 +1,6 @@
+#ifndef _LINE_SENSOR_
+#define _LINE_SENSOR_
+
 #include "pin_names_and_constants.h"
 
 /**
@@ -320,3 +323,4 @@ void LineSensor::initialiseTimer3(long desired_frequency) {
     sei();
   }
 }
+#endif

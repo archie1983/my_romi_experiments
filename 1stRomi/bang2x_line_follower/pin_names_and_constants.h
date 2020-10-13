@@ -1,3 +1,5 @@
+#ifndef _PIN_NAMES_
+#define _PIN_NAMES_
 /**
  * This class will serve as a central point for all pin definitions
  * and constants.
@@ -27,3 +29,5 @@
 #define RIGHT_ENCODER_XOR 7
 #define RIGHT_ENCODER_PHASE_B 23
 #define LEFT_ENCODER_XOR 8
+
+#endif
