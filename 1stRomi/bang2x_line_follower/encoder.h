@@ -2,7 +2,7 @@
 #define _ENCODER_
 
 #include "pin_names_and_constants.h"
-#include "motor.h"
+#include "threshold_callback.h"
 
 class Encoder {
   public:
@@ -71,10 +71,10 @@ class Encoder {
      * Sets a threshold of the given counts and the function that needs to be run
      * after the threshold has been reached.
      */
-    void setThreshold(void (Motor:: *threshold_functionality) (void), int counts) {
+    void setThreshold(ThresholdCallback *threshold_triggered_functionality, int counts) {
       thresholdOn = true;
       thresholdCount = counts;
-      this->threshold_functionality = threshold_functionality;
+      this->threshold_triggered_functionality = threshold_triggered_functionality;
     }
     
   private:
@@ -108,9 +108,9 @@ class Encoder {
     bool thresholdOn = false;
 
     /**
-     * A function pointer so that we can run the passed function when the threshold has been reached.
+     * A pointer to the motro control so that we can do something with the motor when the threshold has been reached.
      */
-    void (Motor::* threshold_functionality) (void) = NULL;
+    ThresholdCallback *threshold_triggered_functionality;
 
     /**
      * A threshold count. This will be set by setThreshold function. ISR will count this down or up and when
@@ -125,7 +125,7 @@ class Encoder {
     void thresholdReached() {
       thresholdOn = false;
       thresholdCount = 0;
-      threshold_functionality();
+      threshold_triggered_functionality->callBackFunction();
     }
 };
 

@@ -73,10 +73,10 @@ void act_on_commands() {
 
     if (in_cmd.indexOf("left") > -1) { //# if we want to drive the LED
       Serial.println("Driving LEFT motor");
-      Motor::getLeftMotor()->goForward_1Second();
+      Motor::getLeftMotor()->goForward_100Counts();
     } else if(in_cmd.indexOf("right") > -1) { //# if we want to drive the motor
       Serial.println("Driving RIGHT motor");
-      Motor::getRightMotor()->goForward_1Second();
+      Motor::getRightMotor()->goForward_100Counts();
     }
   }
 }

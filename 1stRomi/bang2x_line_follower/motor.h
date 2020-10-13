@@ -2,12 +2,13 @@
 #define _MOTOR_
 
 #include "pin_names_and_constants.h"
+#include "threshold_callback.h"
 #include "encoder.h"
 
 /**
  * This class will control motor movement.
  */
-class Motor {
+class Motor : public ThresholdCallback {
   public:
     /**
      * Runs the motor forward for 1 second at half PWM power.
@@ -22,7 +23,8 @@ class Motor {
      * Runs the motor forward for for 100 encoder counts at half PWM power
      */
     void goForward_100Counts() {
-      encoder->setThreshold(&stopMotor, 100);
+      turnMotor(127);
+      encoder->setThreshold(this, 300);
     }
 
     static Motor* getRightMotor() {
@@ -31,7 +33,14 @@ class Motor {
 
     static Motor* getLeftMotor() {
       return leftMotor;
-    }  
+    }
+
+    /**
+     * Callback function overridden from ThresholdCallback class that's been inherited.
+     */
+    void callBackFunction() {
+      stopMotor();
+    }
   private:
     /**
      * Constructor with a set of pins- directions and run control for the motor.
