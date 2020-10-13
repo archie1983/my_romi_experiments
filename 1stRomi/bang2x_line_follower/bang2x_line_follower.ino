@@ -33,12 +33,34 @@ void loop() {
 
   Serial.print(LineSensor::getRightSensor()->getCurrentSensorValue());
   Serial.print(", ");
+  Serial.print(LineSensor::getRightSensor()->getBias());
+  Serial.print(", ");
   Serial.print(LineSensor::getCentreSensor()->getCurrentSensorValue());
   Serial.print(", ");
+  Serial.print(LineSensor::getCentreSensor()->getBias());
+  Serial.print(", ");
   Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
-  Serial.println("");
+  Serial.print(", ");
+  Serial.println(LineSensor::getLeftSensor()->getBias());
 
   act_on_commands();
+}
+
+/**
+ * Bang-bang controller. A simple reaction to the current readings of the sensor.
+ */
+void bang2x() {
+  bool sensor_r = LineSensor::getRightSensor()->overLine();
+  bool sensor_c = LineSensor::getCentreSensor()->overLine();
+  bool sensor_l = LineSensor::getLeftSensor()->overLine();
+  /*
+   * 1) If no sensors are over the line, then we need to find the line. Drive forward for now.
+   * 2) 
+   */
+  
+  if (!sensor_r && !sensor_c && !sensor_l) {
+    
+  }
 }
 
 /**

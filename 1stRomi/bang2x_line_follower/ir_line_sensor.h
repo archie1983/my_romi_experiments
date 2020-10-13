@@ -27,6 +27,13 @@ class LineSensor {
     }
 
     /**
+     * Returns the current sensor value as is, with no bias compensation.
+     */
+    unsigned long getBias() {
+      return bias;
+    }
+
+    /**
      * Returns a flag of whether the sensor is above a line or not.
      */
     bool overLine() {

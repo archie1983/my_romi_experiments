@@ -20,3 +20,10 @@
 #define LEFT_MOTOR_DIR 16
 #define RIGHT_MOTOR_RUN 9
 #define LEFT_MOTOR_RUN 10
+
+/**
+ * Encoder pins
+ */
+#define RIGHT_ENCODER_XOR 7
+#define RIGHT_ENCODER_PHASE_B 23
+#define LEFT_ENCODER_XOR 8
