@@ -22,6 +22,8 @@
 #define LEFT_MOTOR_DIR 16
 #define RIGHT_MOTOR_RUN 9
 #define LEFT_MOTOR_RUN 10
+#define MOTOR_FORWARD LOW
+#define MOTOR_BACKWARD HIGH
 
 /**
  * Encoder pins

@@ -76,6 +76,14 @@ class Encoder {
       thresholdCount = counts;
       this->threshold_triggered_functionality = threshold_triggered_functionality;
     }
+
+    /**
+     * Clears the current threshold.
+     */
+    void clearThreshold() {
+      thresholdOn = false;
+      thresholdCount = 0;
+    }
     
   private:
     /**
@@ -289,9 +297,9 @@ ISR( INT6_vect ) {
    * AND phase B==0, then we're going CW
    */
   if (!right_encoder_phase_a_signal_prev && right_encoder_phase_a_signal && !right_encoder_phase_b_signal) {
-    Encoder::getRightEncoder()->incEncPulseCnt(); //# going CW
+    Encoder::getRightEncoder()->decEncPulseCnt(); //# going CW - a.k.a backwards
   } else if (!right_encoder_phase_a_signal_prev && right_encoder_phase_a_signal && right_encoder_phase_b_signal) {
-    Encoder::getRightEncoder()->decEncPulseCnt(); //# going CCW
+    Encoder::getRightEncoder()->incEncPulseCnt(); //# going CCW - a.k.a forwards
   }
   right_encoder_phase_a_signal_prev = right_encoder_phase_a_signal;
 }
@@ -327,9 +335,9 @@ ISR( PCINT0_vect ) {
    * AND phase B==0, then we're going CW
    */
   if (!left_encoder_phase_a_signal_prev && left_encoder_phase_a_signal && !left_encoder_phase_b_signal) {
-    Encoder::getLeftEncoder()->incEncPulseCnt(); //# going CW
+    Encoder::getLeftEncoder()->decEncPulseCnt(); //# going CW - a.k.a backwards
   } else if (!left_encoder_phase_a_signal_prev && left_encoder_phase_a_signal && left_encoder_phase_b_signal) {
-    Encoder::getLeftEncoder()->decEncPulseCnt(); //# going CCW
+    Encoder::getLeftEncoder()->incEncPulseCnt(); //# going CCW - a.k.a forwards
   }
   left_encoder_phase_a_signal_prev = left_encoder_phase_a_signal;
 }

@@ -40,7 +40,15 @@ class LineSensor {
      * Returns a flag of whether the sensor is above a line or not.
      */
     bool overLine() {
-      return getCurrentSensorValue() > 500;
+      return getCurrentSensorValue() > 300;
+    }
+
+    /**
+     * Resets bias and outstanding calibration values so that we enter calibration routine again.
+     */
+    void resetCalibration() {
+      outstanding_calibration_values = LINE_SENSOR_CALIBRATION_VALUE_COUNT; //# we'll need to calibrate it for the full amount of cailbration values
+      bias = 0;
     }
 
     /**

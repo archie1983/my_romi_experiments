@@ -20,11 +20,35 @@ class Motor : public ThresholdCallback {
     }
 
     /**
-     * Runs the motor forward for for 100 encoder counts at half PWM power
+     * Runs the motor forward for for 100 encoder counts at 35 PWM power
      */
-    void goForward_100Counts() {
-      turnMotor(127);
-      encoder->setThreshold(this, 300);
+    void goForward_25Counts() {
+      turnMotor(35);
+      encoder->setThreshold(this, 25);
+    }
+
+    /**
+     * Runs the motor forward for for the specified amount of encoder counts at 35 PWM power
+     */
+    void goForwardByCounts(unsigned int counts) {
+      turnMotor(35);
+      encoder->setThreshold(this, counts);
+    }
+
+    /**
+     * Runs the motor backwards for for the specified amount of encoder counts at 35 PWM power
+     */
+    void goBackwardByCounts(unsigned int counts) {
+      turnMotor(-35);
+      encoder->setThreshold(this, -counts);
+    }
+
+    /**
+     * Stops motor and cancels any previous threshold that was sent to the encoder.
+     */
+    void stopMotorAndCancelPreviousInstruction() {
+      encoder->clearThreshold();
+      stopMotor();
     }
 
     static Motor* getRightMotor() {
@@ -93,9 +117,9 @@ class Motor : public ThresholdCallback {
      */
     void turnMotor(int power) {
       if (power > 0) {
-        digitalWrite(pinDirection, HIGH);
+        digitalWrite(pinDirection, MOTOR_FORWARD);
       } else {
-        digitalWrite(pinDirection, LOW);
+        digitalWrite(pinDirection, MOTOR_BACKWARD);
       }
   
       /**
