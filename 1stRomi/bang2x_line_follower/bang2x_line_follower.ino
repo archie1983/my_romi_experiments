@@ -71,8 +71,8 @@ void bang2x_w_variable_power() {
   int power_right = wls * 255 * -1;
   int power_left = wls * 255;
   
-  Motor::getRightMotor()->goForwardByCounts(5);
-  Motor::getLeftMotor()->goForwardByCounts(5);
+  Motor::getRightMotor()->goForwardByCounts(5, power_right);
+  Motor::getLeftMotor()->goForwardByCounts(5, power_left);
 }
 
 /**
