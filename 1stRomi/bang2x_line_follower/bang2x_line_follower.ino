@@ -23,6 +23,10 @@ bool follow = false;
 void loop() {
   // put your main code here, to run repeatedly:
 //  delay(300);
+
+  Serial.print("Weighed sensor: ");
+  Serial.println(weighted_line_sensor());
+  
 //
 //  if (LineSensor::getRightSensor()->overLine()) {
 //    Serial.println("Right sensor over line");
@@ -52,10 +56,41 @@ void loop() {
    * If that's what user wants, follow the line
    */
   if (follow) {
-    bang2x();
+    //bang2x();#
+    bang2x_w();
   }
   
   act_on_commands();
+}
+
+/**
+ * Weighted line sensor bang-bang that drive wheels at non-constant power.
+ */
+void bang2x_w_variable_power() {
+  float wls = weighted_line_sensor();
+  int power_right = wls * 255 * -1;
+  int power_left = wls * 255;
+  
+  Motor::getRightMotor()->goForwardByCounts(5);
+  Motor::getLeftMotor()->goForwardByCounts(5);
+}
+
+/**
+ * Weighted line sensor bang-bang
+ */
+void bang2x_w() {
+  float wls = weighted_line_sensor();
+
+  if(wls > 0.1) {
+    Motor::getLeftMotor()->goForwardByCounts(5);
+    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
+  } else if(wls < -0.1) {
+    Motor::getRightMotor()->goForwardByCounts(5);
+    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
+  } else {
+    Motor::getRightMotor()->goForwardByCounts(5);
+    Motor::getLeftMotor()->goForwardByCounts(5);
+  }
 }
 
 /**
@@ -114,27 +149,48 @@ void bang2x() {
 }
 
 /**
+ * Calculates the weighed line sensor value as described in exercise 3 and returns it.
+ */
+float weighted_line_sensor() {
+  unsigned int left_value = LineSensor::getLeftSensor()->getCurrentSensorValue();
+  unsigned int centre_value = LineSensor::getCentreSensor()->getCurrentSensorValue();
+  unsigned int right_value = LineSensor::getRightSensor()->getCurrentSensorValue();
+  
+  float total_magnitude = left_value + centre_value + right_value;
+
+  if (total_magnitude > 0) {
+    float left_proportional = left_value / total_magnitude;
+    float right_proportional = right_value / total_magnitude;
+    
+    return left_proportional - right_proportional;
+  } else {
+    return 0.0;
+  }
+}
+
+/**
  * Reads a command from the Serial connection and acts on it
  */
 void act_on_commands() {
+  int steps_to_move = 10;
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
 
     if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
       Serial.println("Driving LEFT motor");
-      Motor::getLeftMotor()->goForward_25Counts();
+      Motor::getLeftMotor()->goBackwardByCounts(steps_to_move, 35);
     } else if(in_cmd.indexOf("right") > -1) { //# if we want to drive the right motor
       Serial.println("Driving RIGHT motor");
-      Motor::getRightMotor()->goForward_25Counts();
+      Motor::getRightMotor()->goBackwardByCounts(steps_to_move, 35);
     } else if(in_cmd.indexOf("bothb") > -1) { //# if we want to drive both motors back
       Serial.println("Driving BOTH motors back");
-      Motor::getRightMotor()->goBackwardByCounts(125);
-      Motor::getLeftMotor()->goBackwardByCounts(125);
+      Motor::getRightMotor()->goBackwardByCounts(steps_to_move);
+      Motor::getLeftMotor()->goBackwardByCounts(steps_to_move);
     } else if(in_cmd.indexOf("bothf") > -1) { //# if we want to drive both motors forward
       Serial.println("Driving BOTH motors forward");
-      Motor::getRightMotor()->goForwardByCounts(125);
-      Motor::getLeftMotor()->goForwardByCounts(125);
+      Motor::getRightMotor()->goForwardByCounts(steps_to_move, 35);
+      Motor::getLeftMotor()->goForwardByCounts(steps_to_move, 35);
     } else if(in_cmd.indexOf("follow") > -1) { //# if we want to follow the line
       follow = !follow;
 

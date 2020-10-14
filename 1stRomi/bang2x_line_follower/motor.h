@@ -44,6 +44,22 @@ class Motor : public ThresholdCallback {
     }
 
     /**
+     * Runs the motor forward for for the specified amount of encoder counts at the specified PWM power
+     */
+    void goForwardByCounts(unsigned int counts, byte power) {
+      turnMotor(power);
+      encoder->setThreshold(this, counts);
+    }
+
+    /**
+     * Runs the motor backwards for for the specified amount of encoder counts at the specified PWM power
+     */
+    void goBackwardByCounts(unsigned int counts, byte power) {
+      turnMotor(-power);
+      encoder->setThreshold(this, -counts);
+    }
+
+    /**
      * Stops motor and cancels any previous threshold that was sent to the encoder.
      */
     void stopMotorAndCancelPreviousInstruction() {
