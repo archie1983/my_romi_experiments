@@ -4,9 +4,9 @@
  * This class will serve as a central point for all pin definitions
  * and constants.
  */
-#define LINE_SENSOR_COUNT 3
-#define LINE_SENSOR_CALIBRATION_VALUE_COUNT 50
-#define LINE_SENSOR_UPDATE_FREQUENCY 25
+#define LINE_SENSOR_COUNT 3 //# how many line sensors we have
+#define LINE_SENSOR_CALIBRATION_VALUE_COUNT 50 //# how many calibration values we want to calibrate on (be careful not to overflow the adder)
+#define LINE_SENSOR_UPDATE_FREQUENCY 25 //# how fast we want our sensors updated.
 
 /**
  * Line sensor pins

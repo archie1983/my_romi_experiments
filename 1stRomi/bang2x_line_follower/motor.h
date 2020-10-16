@@ -11,20 +11,21 @@
 class Motor : public ThresholdCallback {
   public:
     /**
-     * Runs the motor forward for 1 second at half PWM power.
+     * Runs the motor forward for the given time amount with the given power
      */
-    void goForward_1Second() {
-      turnMotor(127);
-      delay(1000);
+    void goForwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
+      turnMotor(power);
+      delay(ms);
       stopMotor();
     }
 
     /**
-     * Runs the motor forward for for 100 encoder counts at 35 PWM power
+     * Runs the motor forward for the given time amount with the given power
      */
-    void goForward_25Counts() {
-      turnMotor(35);
-      encoder->setThreshold(this, 25);
+    void goBackwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
+      turnMotor(-power);
+      delay(ms);
+      stopMotor();
     }
 
     /**
@@ -43,6 +44,18 @@ class Motor : public ThresholdCallback {
       encoder->setThreshold(this, -counts);
     }
 
+    /**
+     * A convenience function that takes negative or positive power and based on that
+     * either calls goForwardByCounts or goBackwardByCounts
+     */
+    void moveByCounts(unsigned int counts, int power) {
+      if (power > 0) {
+        goForwardByCounts(counts, power);
+      } else {
+        goBackwardByCounts(counts, abs(power));
+      }
+    }
+  
     /**
      * Runs the motor forward for for the specified amount of encoder counts at the specified PWM power
      */
@@ -67,10 +80,16 @@ class Motor : public ThresholdCallback {
       stopMotor();
     }
 
+    /**
+     * Static accessor for the right motor
+     */
     static Motor* getRightMotor() {
       return rightMotor;
     }
-
+    
+    /**
+     * Static accessor for the left motor
+     */
     static Motor* getLeftMotor() {
       return leftMotor;
     }
@@ -140,9 +159,9 @@ class Motor : public ThresholdCallback {
   
       /**
        * There's no point to turn the motors at all if the the power is less than 9 as
-       * that is within deadband.
+       * that is within deadband. Let's make it 12 to be sure we're out of deadband.
        */
-      if (abs(power) > 8) {
+      if (abs(power) > 11) {
         /**
          * If we don't take abs value here, then it looks like values greater than 255 overflow
          * and negative values are treated as unsigned byte, rather than a negative value, 

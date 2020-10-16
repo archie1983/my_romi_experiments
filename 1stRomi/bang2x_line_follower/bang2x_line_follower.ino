@@ -29,6 +29,7 @@ void loop() {
   if (follow) {
     //bang2x();
     bang2x_w();
+    //bang2x_w_timed();
     //bang2x_w_variable_power();
   }
   
@@ -39,16 +40,86 @@ void loop() {
  * Weighted line sensor bang-bang that drive wheels at non-constant power.
  */
 void bang2x_w_variable_power() {
+  delay(120);
+  byte counts_to_run = 10;
+  byte counts_to_turn = 10;
+  byte power_to_go_straight = 36;
+  
   float wls = weighted_line_sensor();
-  int power_right = wls * 255 * -1;
-  int power_left = wls * 255;
+  int power_right = wls * 255;
+  int power_left = wls * 255 * -1;
 
-  if (abs(wls) < 0.1) {
-    Motor::getRightMotor()->goForwardByCounts(5);
-    Motor::getLeftMotor()->goForwardByCounts(5);    
+  bool sensor_r = LineSensor::getRightSensor()->overLine();
+  bool sensor_c = LineSensor::getCentreSensor()->overLine();
+  bool sensor_l = LineSensor::getLeftSensor()->overLine();
+
+  byte number_of_sensors_over_line = 0;
+  if (sensor_r) number_of_sensors_over_line++;
+  if (sensor_c) number_of_sensors_over_line++;
+  if (sensor_l) number_of_sensors_over_line++;
+
+  talk_about_it();
+
+  if (abs(wls) > 0.1) { //# this only give chaotic movement
+  //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
+  //if (number_of_sensors_over_line < 3 && number_of_sensors_over_line > 0 && abs(wls) > 0.06) {
+    /*
+     * turning
+     */
+    Serial.print("Turning ");
+    /*
+     * If left motor is being driven stronger than the right, then we're turning right
+     * and vice versa.
+     */
+    Serial.print(power_right < power_left ? "right : " : "left : ");
+    Serial.print(power_right);
+    Serial.print(" # ");
+    Serial.print(power_left);
+    Serial.print(" wls=");
+    Serial.println(wls);
+    Motor::getRightMotor()->moveByCounts(counts_to_turn, power_right);
+    Motor::getLeftMotor()->moveByCounts(counts_to_turn, power_left);
   } else {
-    Motor::getRightMotor()->goForwardByCounts(5, power_right);
-    Motor::getLeftMotor()->goForwardByCounts(5, power_left);
+    /*
+     * going straight 
+     */
+    Serial.println("Going straight");
+    Motor::getRightMotor()->moveByCounts(counts_to_run, power_to_go_straight);
+    Motor::getLeftMotor()->moveByCounts(counts_to_run, power_to_go_straight);
+  }
+}
+
+/**
+ * Weighted line sensor bang-bang with timed motor runs (not counting pulses)
+ */
+void bang2x_w_timed() {
+  byte time_to_run = 10;
+  byte time_to_turn = 20;
+  byte power_to_go_straight = 36;
+  byte power_to_turn = 36;
+  
+  float wls = 0.0;
+
+  bool sensor_r = LineSensor::getRightSensor()->overLine();
+  bool sensor_c = LineSensor::getCentreSensor()->overLine();
+  bool sensor_l = LineSensor::getLeftSensor()->overLine();
+
+  if (sensor_l || sensor_c || sensor_r) {
+    wls = weighted_line_sensor();
+  }
+
+  if(wls < -0.1) {
+    Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(time_to_turn, power_to_turn);
+    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
+    Serial.println("Turn right");
+  } else if(wls > 0.1) {
+    Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(time_to_turn, power_to_turn);
+    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
+    Serial.println("Turn left");
+  } else {
+    Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(time_to_run, power_to_go_straight);
+    Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(time_to_run, power_to_go_straight);
+    Serial.println("Go straight");
   }
 }
 
@@ -163,17 +234,20 @@ float weighted_line_sensor() {
  */
 void act_on_commands() {
   int steps_to_move = 200;
-  int steps_to_turn = 10;
+  int steps_to_turn = 100;
+  int time_to_turn = 200;
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
 
     if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
-      Serial.println("Driving LEFT motor");
-      Motor::getLeftMotor()->goBackwardByCounts(steps_to_turn, 35);
+      Serial.println("Turning left");
+      Motor::getRightMotor()->moveByCounts(steps_to_turn, 50);
+      Motor::getLeftMotor()->moveByCounts(steps_to_turn, -50);
     } else if(in_cmd.indexOf("right") > -1) { //# if we want to drive the right motor
-      Serial.println("Driving RIGHT motor");
-      Motor::getRightMotor()->goBackwardByCounts(steps_to_turn, 35);
+      Serial.println("Turning right");
+      Motor::getRightMotor()->moveByCounts(steps_to_turn, -50);
+      Motor::getLeftMotor()->moveByCounts(steps_to_turn, 50);
     } else if(in_cmd.indexOf("bothb") > -1) { //# if we want to drive both motors back
       Serial.println("Driving BOTH motors back");
       Motor::getRightMotor()->goBackwardByCounts(steps_to_move);
@@ -200,7 +274,7 @@ void act_on_commands() {
 }
 
 void talk_about_it() {
-  delay(300);
+  //delay(300);
 
 //  Serial.print("Weighed sensor: ");
   Serial.print(weighted_line_sensor());
