@@ -21,7 +21,7 @@ void setup() {
 bool follow = false;
 
 void loop() {
-  //talk_about_it();
+  talk_about_it(true, false);
   
   /*
    * If that's what user wants, follow the line
@@ -58,7 +58,7 @@ void bang2x_w_variable_power() {
   if (sensor_c) number_of_sensors_over_line++;
   if (sensor_l) number_of_sensors_over_line++;
 
-  talk_about_it();
+  talk_about_it(true, false);
 
   if (abs(wls) > 0.1) { //# this only give chaotic movement
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
@@ -127,6 +127,9 @@ void bang2x_w_timed() {
  * Weighted line sensor bang-bang
  */
 void bang2x_w() {
+
+  //talk_about_it(true, false);
+  
   int steps_to_move = 10;
   int steps_to_turn = 20;
   float wls = 0.0;
@@ -273,23 +276,30 @@ void act_on_commands() {
   }
 }
 
-void talk_about_it() {
-  //delay(300);
+/**
+ * Prints out information about line sensors.
+ * do_delay : a flag of whether we want to do a delay or not
+ * full_info : a flag of wether we want to print out all info (including wether the sensor is over line or not) or just the sensor values (good for plotting)
+ */
+void talk_about_it(bool do_delay, bool full_info) {
+  if (do_delay) delay(300);
 
-//  Serial.print("Weighed sensor: ");
-  Serial.print(weighted_line_sensor());
-  Serial.print(", ");
+  if (full_info) {
+  //  Serial.print("Weighed sensor: ");
+    Serial.print(weighted_line_sensor());
+    Serial.print(", ");
+    
+    if (LineSensor::getRightSensor()->overLine()) {
+      Serial.println("Right sensor over line");
+    }
+    
+    if (LineSensor::getCentreSensor()->overLine()) {
+      Serial.println("Centre sensor over line");
+    }
   
-  if (LineSensor::getRightSensor()->overLine()) {
-    Serial.println("Right sensor over line");
-  }
-  
-  if (LineSensor::getCentreSensor()->overLine()) {
-    Serial.println("Centre sensor over line");
-  }
-
-  if (LineSensor::getLeftSensor()->overLine()) {
-    Serial.println("Left sensor over line");
+    if (LineSensor::getLeftSensor()->overLine()) {
+      Serial.println("Left sensor over line");
+    }
   }
   
   Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
