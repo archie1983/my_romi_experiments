@@ -63,7 +63,7 @@ class Encoder {
     /**
      * Returns our current pulse count for this encoder.
      */
-    int getPulseCount() {
+    long getPulseCount() {
       return encoder_pulse_cnt;
     }
 
@@ -101,7 +101,7 @@ class Encoder {
     /**
      * Pulse count of the encoder that is connected to this motor.
      */
-    volatile int encoder_pulse_cnt = 0;
+    volatile long encoder_pulse_cnt = 0;
 
     /**
      * References of the left encoder and the right encoder. We'll initialise them too within encoder.h
@@ -131,8 +131,7 @@ class Encoder {
      * typically be called by ISR) when the set threshold has been reached.
      */
     void thresholdReached() {
-      thresholdOn = false;
-      thresholdCount = 0;
+      clearThreshold();
       threshold_triggered_functionality->callBackFunction();
     }
 };

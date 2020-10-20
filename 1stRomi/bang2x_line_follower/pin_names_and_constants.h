@@ -32,4 +32,9 @@
 #define RIGHT_ENCODER_PHASE_B 23
 #define LEFT_ENCODER_XOR 8
 
+/**
+ * LED
+ */
+#define YELLOW_LED 13
+
 #endif

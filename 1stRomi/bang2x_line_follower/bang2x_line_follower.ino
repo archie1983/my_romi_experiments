@@ -13,6 +13,14 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
   Serial.println("***RESET***");
+
+  /**
+   * Turns out that if we do this inside the constructor of LineSensor, then our timer 
+   * configuration gets overwritten later, because our instance is constructed before 
+   * Arduino has initialised its stuff. So we have no choice but to call this function 
+   * in the setup section of the main code.
+   */
+  LineSensor::reInitTimer(LINE_SENSOR_UPDATE_FREQUENCY);
 }
 
 /**
@@ -21,7 +29,7 @@ void setup() {
 bool follow = false;
 
 void loop() {
-  talk_about_it(true, false);
+  talk_about_it(true, true);
   
   /*
    * If that's what user wants, follow the line
@@ -272,6 +280,12 @@ void act_on_commands() {
       LineSensor::getRightSensor()->resetCalibration();
       LineSensor::getCentreSensor()->resetCalibration();
       LineSensor::getLeftSensor()->resetCalibration();
+    } else if(in_cmd.indexOf("reinit1") > -1) {
+      LineSensor::reInitTimer(5);
+    } else if(in_cmd.indexOf("reinit2") > -1) {
+      LineSensor::reInitTimer(10);
+    } else if(in_cmd.indexOf("reinit3") > -1) {
+      LineSensor::reInitTimer(25);
     }
   }
 }
@@ -285,28 +299,50 @@ void talk_about_it(bool do_delay, bool full_info) {
   if (do_delay) delay(300);
 
   if (full_info) {
-  //  Serial.print("Weighed sensor: ");
-    Serial.print(weighted_line_sensor());
+//    Serial.print("Weighed sensor: ");
+//    Serial.println(weighted_line_sensor());
+//    
+//    if (LineSensor::getRightSensor()->overLine()) {
+//      Serial.println("Right sensor over line");
+//    }
+//    
+//    if (LineSensor::getCentreSensor()->overLine()) {
+//      Serial.println("Centre sensor over line");
+//    }
+//  
+//    if (LineSensor::getLeftSensor()->overLine()) {
+//      Serial.println("Left sensor over line");
+//    }
+//
+//    Serial.print("Left wheel speed: ");
+//    Serial.println(LineSensor::getLeftWheelSpeed());
+//
+//    Serial.print("Right wheel speed: ");
+//    Serial.println(LineSensor::getRightWheelSpeed());
+//
+//    Serial.print("Right encoder: ");
+//    Serial.println(Encoder::getRightEncoder()->getPulseCount());
+//
+//    Serial.print("Left encoder: ");
+//    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
+
+    /**
+     * For charting:.
+     */
+    Serial.print(LineSensor::getLeftWheelSpeed());
     Serial.print(", ");
-    
-    if (LineSensor::getRightSensor()->overLine()) {
-      Serial.println("Right sensor over line");
-    }
-    
-    if (LineSensor::getCentreSensor()->overLine()) {
-      Serial.println("Centre sensor over line");
-    }
-  
-    if (LineSensor::getLeftSensor()->overLine()) {
-      Serial.println("Left sensor over line");
-    }
+    Serial.print(LineSensor::getRightWheelSpeed());
+    Serial.print(", ");
+    Serial.print(Encoder::getRightEncoder()->getPulseCount());
+    Serial.print(", ");
+    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
   }
   
-  Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
-  Serial.print(", ");
-  Serial.print(LineSensor::getCentreSensor()->getCurrentSensorValue());
-  Serial.print(", ");
-  Serial.println(LineSensor::getRightSensor()->getCurrentSensorValue());
+//  Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
+//  Serial.print(", ");
+//  Serial.print(LineSensor::getCentreSensor()->getCurrentSensorValue());
+//  Serial.print(", ");
+//  Serial.println(LineSensor::getRightSensor()->getCurrentSensorValue());
   
 //  Serial.print(", ");
 //
