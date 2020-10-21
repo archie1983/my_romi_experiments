@@ -263,6 +263,18 @@ void act_on_commands() {
       Serial.println("Driving BOTH motors back");
       Motor::getRightMotor()->goBackwardByCounts(steps_to_move);
       Motor::getLeftMotor()->goBackwardByCounts(steps_to_move);
+    } else if(in_cmd.indexOf("bothf25") > -1) { //# if we want to drive both motors forward
+      Serial.println("Driving BOTH motors forward");
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 25);
+      Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 25);
+    } else if(in_cmd.indexOf("bothf100") > -1) { //# if we want to drive both motors forward
+      Serial.println("Driving BOTH motors forward");
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
+      Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
+    } else if(in_cmd.indexOf("bothf200") > -1) { //# if we want to drive both motors forward
+      Serial.println("Driving BOTH motors forward");
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 200);
+      Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 200);
     } else if(in_cmd.indexOf("bothf") > -1) { //# if we want to drive both motors forward
       Serial.println("Driving BOTH motors forward");
       Motor::getRightMotor()->goForwardByCounts(steps_to_move, 35);
@@ -314,34 +326,34 @@ void talk_about_it(bool do_delay, bool full_info) {
 //      Serial.println("Left sensor over line");
 //    }
 //
-//    Serial.print("Left wheel speed (line sens): ");
-//    Serial.println(LineSensor::getLeftWheelSpeed());
-//
-//    Serial.print("Right wheel speed (line sens): ");
-//    Serial.println(LineSensor::getRightWheelSpeed());
-//
-//    Serial.print("Left wheel speed (encoder): ");
-//    Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
-//
-//    Serial.print("Right wheel speed (encoder): ");
-//    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
-//
-//    Serial.print("Right encoder: ");
-//    Serial.println(Encoder::getRightEncoder()->getPulseCount());
-//
-//    Serial.print("Left encoder: ");
-//    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
+    Serial.print("Left wheel speed (line sens): ");
+    Serial.println(LineSensor::getLeftWheelSpeed_ms());
+
+    Serial.print("Right wheel speed (line sens): ");
+    Serial.println(LineSensor::getRightWheelSpeed_ms());
+
+    Serial.print("Left wheel speed (encoder): ");
+    Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
+
+    Serial.print("Right wheel speed (encoder): ");
+    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
+
+    Serial.print("Right encoder: ");
+    Serial.println(Encoder::getRightEncoder()->getPulseCount());
+
+    Serial.print("Left encoder: ");
+    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
     /**
      * For charting:.
      */
-    Serial.print(LineSensor::getLeftWheelSpeed());
-    Serial.print(", ");
-    Serial.print(LineSensor::getRightWheelSpeed());
-    Serial.print(", ");
-    Serial.print(Encoder::getLeftEncoder()->getWheelSpeed());
-    Serial.print(", ");
-    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
+//    Serial.print(LineSensor::getLeftWheelSpeed_ms());
+//    Serial.print(", ");
+//    Serial.print(LineSensor::getRightWheelSpeed_ms());
+//    Serial.print(", ");
+//    Serial.print(Encoder::getLeftEncoder()->getWheelSpeed());
+//    Serial.print(", ");
+//    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
   }
   
 //  Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());

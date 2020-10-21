@@ -7,6 +7,7 @@
 #define LINE_SENSOR_COUNT 3 //# how many line sensors we have
 #define LINE_SENSOR_CALIBRATION_VALUE_COUNT 50 //# how many calibration values we want to calibrate on (be careful not to overflow the adder)
 #define LINE_SENSOR_UPDATE_FREQUENCY 25 //# how fast we want our sensors updated.
+#define MAX_CALLBACKS_FOR_TIMER 2 //# how many callbacks can we have for timer3, which also drives line sensor.
 
 /**
  * Line sensor pins
@@ -32,6 +33,7 @@
 #define RIGHT_ENCODER_PHASE_B 23
 #define LEFT_ENCODER_XOR 8
 #define USECONDS_IN_1_SECOND 1000000
+#define PULSES_PER_METER 1541 //# how many encoder pulses are in a meter
 
 /**
  * LED

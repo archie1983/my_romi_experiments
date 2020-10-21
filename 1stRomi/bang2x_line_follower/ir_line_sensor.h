@@ -3,6 +3,7 @@
 
 #include "pin_names_and_constants.h"
 #include "encoder.h"
+#include "threshold_callback.h"
 
 /**
  * This class will be responsible for reading one of the IR sensors,
@@ -85,6 +86,22 @@ class LineSensor {
 
       left_enc_pulse_cnt_cur = Encoder::getLeftEncoder()->getPulseCount();
       right_enc_pulse_cnt_cur = Encoder::getRightEncoder()->getPulseCount();
+
+      /*
+       * If we have any threshold running, then let's update their counters and act on them if it's
+       * the time.
+       */
+      for (int cnt = 0; cnt < MAX_CALLBACKS_FOR_TIMER; cnt++) {
+        if (timer_thresholds[cnt] != NULL && timer_thresholds[cnt]->isThresholdActive()) {
+          timer_thresholds[cnt]->decreaseCounter();
+          /*
+           * If the threshold has done its job and is no longer active, then let's remove it.
+           */
+          if (!timer_thresholds[cnt]->isThresholdActive()) {
+            timer_thresholds[cnt] = NULL;
+          }
+        }
+      }
     }
 
     /**
@@ -111,6 +128,44 @@ class LineSensor {
 
     static int getLeftWheelSpeed() {
       return (left_enc_pulse_cnt_cur - left_enc_pulse_cnt_prev) * current_measurement_frequency;
+    }
+
+    /**
+     * Accessors for right and left wheel speeds converted to m/s.
+     */
+    static double getRightWheelSpeed_ms() {
+      return double((right_enc_pulse_cnt_cur - right_enc_pulse_cnt_prev) * current_measurement_frequency) / PULSES_PER_METER;
+    }
+
+    static double getLeftWheelSpeed_ms() {
+      return double((left_enc_pulse_cnt_cur - left_enc_pulse_cnt_prev) * current_measurement_frequency) / PULSES_PER_METER;
+    }
+
+    /**
+     * Sets a threshold of the given time in ms and the function that needs to be run
+     * after the time has elapsed.
+     */
+    static void setThreshold(ThresholdCallback* threshold_triggered_functionality, unsigned int ms) {
+
+      /*
+       * If we have a space for thresholds, then let's use that space, otherwise ignore the new threshold.
+       * Unless it's the same pointer address. In that case we want to update the threshold.
+       */
+      int cnt = 0;
+      for (cnt = 0; cnt < MAX_CALLBACKS_FOR_TIMER; cnt++) {
+        if (timer_thresholds[cnt] == NULL || !timer_thresholds[cnt]->isThresholdActive() || timer_thresholds[cnt] == threshold_triggered_functionality) {
+          timer_thresholds[cnt] = threshold_triggered_functionality;
+
+          /**
+           * Threshold count will be the number of timer hits that we need to achieve to get the delay of the
+           * given amount of ms.
+           */
+          long thresholdCount = ((double)ms / 1000.0) * current_measurement_frequency;
+          threshold_triggered_functionality->setThreshold(thresholdCount);
+          
+          break;
+        }
+      }
     }
 
   private:
@@ -204,6 +259,12 @@ class LineSensor {
     static void initialiseTimer3(long desired_frequency);
 
     /**
+     * A pointer collection to threshold callbacks (typically motor controls) so that we can do 
+     * something e.g. with the motor when the threshold has been reached.
+     */
+    static ThresholdCallback* timer_thresholds[MAX_CALLBACKS_FOR_TIMER];
+
+    /**
      * A function to read the current ADC sensor value.
      */
     void readCurrentValue() {
@@ -259,6 +320,11 @@ volatile long LineSensor::right_enc_pulse_cnt_cur = 0;
 volatile bool LineSensor::led_state = false;
 
 /**
+ * Getting space for the threshold pointers that we might have.
+ */
+ThresholdCallback * LineSensor::timer_thresholds[MAX_CALLBACKS_FOR_TIMER];
+
+/**
  * We'll need space for the line sensor references.
  */
 LineSensor* LineSensor::allLineSensors[LINE_SENSOR_COUNT];
@@ -292,6 +358,18 @@ ISR( TIMER3_COMPA_vect ) {
  */
 void LineSensor::initialiseTimer3(long desired_frequency) {
   pinMode(YELLOW_LED, OUTPUT);
+
+  /*
+   * If we have any thresholds running, let's cancel them,
+   * if not just initialise.
+   */
+  for (int cnt = 0; cnt < MAX_CALLBACKS_FOR_TIMER; cnt++) {
+    if (timer_thresholds[cnt] != NULL) {
+      timer_thresholds[cnt]->clearThreshold();
+    }
+    timer_thresholds[cnt] = NULL;
+  }
+  
   // disable global interrupts
   cli();          
 

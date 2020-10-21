@@ -33,11 +33,17 @@ class Encoder {
        * If we have a running threshold, then let's update its counter and act on it if it's
        * the time.
        */
-      if (thresholdOn) {
-        if (thresholdCount == 0) {
-          thresholdReached();
-        } else {
-          thresholdCount--;
+      if (threshold_triggered_functionality != NULL && threshold_triggered_functionality->isThresholdActive()) {
+        /*
+         * Operate the threshold
+         */
+        threshold_triggered_functionality->decreaseCounter();
+
+        /*
+         * If the threshold has done its job and is no longer active, then let's remove it.
+         */
+        if (!threshold_triggered_functionality->isThresholdActive()) {
+          threshold_triggered_functionality = NULL;
         }
       }
     }
@@ -55,11 +61,17 @@ class Encoder {
        * If we have a running threshold, then let's update its counter and act on it if it's
        * the time.
        */
-      if (thresholdOn) {
-        if (thresholdCount == 0) {
-          thresholdReached();
-        } else {
-          thresholdCount++;
+      if (threshold_triggered_functionality != NULL && threshold_triggered_functionality->isThresholdActive()) {
+        /*
+         * Operate the threshold
+         */
+        threshold_triggered_functionality->increaseCounter();
+
+        /*
+         * If the threshold has done its job and is no longer active, then let's remove it.
+         */
+        if (!threshold_triggered_functionality->isThresholdActive()) {
+          threshold_triggered_functionality = NULL;
         }
       }
     }
@@ -82,18 +94,8 @@ class Encoder {
      * Sets a threshold of the given counts and the function that needs to be run
      * after the threshold has been reached.
      */
-    void setThreshold(ThresholdCallback *threshold_triggered_functionality, int counts) {
-      thresholdOn = true;
-      thresholdCount = counts;
+    void setThreshold(ThresholdCallback *threshold_triggered_functionality) {
       this->threshold_triggered_functionality = threshold_triggered_functionality;
-    }
-
-    /**
-     * Clears the current threshold.
-     */
-    void clearThreshold() {
-      thresholdOn = false;
-      thresholdCount = 0;
     }
     
   private:
@@ -138,32 +140,10 @@ class Encoder {
     static Encoder* rightEncoder;
 
     /**
-     * If threshold is on, then this will be set to TRUE.
-     * volatile because it's operated on in the functions that are only called from ISR.
-     */
-    volatile bool thresholdOn = false;
-
-    /**
      * A pointer to the motro control so that we can do something with the motor when the threshold has been reached.
      */
-    ThresholdCallback *threshold_triggered_functionality;
-
-    /**
-     * A threshold count. This will be set by setThreshold function. ISR will count this down or up and when
-     * it reaches 0. the threshold will trigger.
-     * volatile because it's operated on in the functions that are only called from ISR.
-     */
-    volatile int thresholdCount = 0;
-
-    /**
-     * Function to call (typically by the incEncPulseCnt or decEncPulseCnt functions which in turn should 
-     * typically be called by ISR) when the set threshold has been reached.
-     */
-    void thresholdReached() {
-      clearThreshold();
-      threshold_triggered_functionality->callBackFunction();
-    }
-
+    ThresholdCallback *threshold_triggered_functionality = NULL;
+    
     /**
      * Calculates line speed and multiplies it by the passed coefficient before storing.
      * The coefficient is typically either 1 for forward motion or -1 for backward motion,

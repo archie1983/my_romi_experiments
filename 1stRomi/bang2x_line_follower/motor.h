@@ -15,8 +15,7 @@ class Motor : public ThresholdCallback {
      */
     void goForwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
       turnMotor(power);
-      delay(ms);
-      stopMotor();
+      LineSensor::setThreshold(this, ms);
     }
 
     /**
@@ -24,8 +23,7 @@ class Motor : public ThresholdCallback {
      */
     void goBackwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
       turnMotor(-power);
-      delay(ms);
-      stopMotor();
+      LineSensor::setThreshold(this, ms);
     }
 
     /**
@@ -33,7 +31,8 @@ class Motor : public ThresholdCallback {
      */
     void goForwardByCounts(unsigned int counts) {
       turnMotor(35);
-      encoder->setThreshold(this, counts);
+      setThreshold(counts);
+      encoder->setThreshold(this);
     }
 
     /**
@@ -41,7 +40,8 @@ class Motor : public ThresholdCallback {
      */
     void goBackwardByCounts(unsigned int counts) {
       turnMotor(-35);
-      encoder->setThreshold(this, -counts);
+      setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
+      encoder->setThreshold(this);
     }
 
     /**
@@ -61,7 +61,8 @@ class Motor : public ThresholdCallback {
      */
     void goForwardByCounts(unsigned int counts, byte power) {
       turnMotor(power);
-      encoder->setThreshold(this, counts);
+      setThreshold(counts);
+      encoder->setThreshold(this);
     }
 
     /**
@@ -69,14 +70,15 @@ class Motor : public ThresholdCallback {
      */
     void goBackwardByCounts(unsigned int counts, byte power) {
       turnMotor(-power);
-      encoder->setThreshold(this, -counts);
+      setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
+      encoder->setThreshold(this);
     }
 
     /**
      * Stops motor and cancels any previous threshold that was sent to the encoder.
      */
     void stopMotorAndCancelPreviousInstruction() {
-      encoder->clearThreshold();
+      this->clearThreshold();
       stopMotor();
     }
 
@@ -98,6 +100,7 @@ class Motor : public ThresholdCallback {
      * Callback function overridden from ThresholdCallback class that's been inherited.
      */
     void callBackFunction() {
+      Serial.print(4);
       stopMotor();
     }
   private:
