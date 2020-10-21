@@ -27,6 +27,8 @@ class Encoder {
     void incEncPulseCnt() {
       encoder_pulse_cnt++;
 
+      calculate_wheel_speed(1);
+
       /*
        * If we have a running threshold, then let's update its counter and act on it if it's
        * the time.
@@ -47,6 +49,8 @@ class Encoder {
     void decEncPulseCnt() {
       encoder_pulse_cnt--;
 
+      calculate_wheel_speed(-1);
+
       /*
        * If we have a running threshold, then let's update its counter and act on it if it's
        * the time.
@@ -65,6 +69,13 @@ class Encoder {
      */
     long getPulseCount() {
       return encoder_pulse_cnt;
+    }
+
+    /**
+     * Returns the speed of the wheel.
+     */
+    long getWheelSpeed() {
+      return wheel_speed;
     }
 
     /**
@@ -100,8 +111,24 @@ class Encoder {
 
     /**
      * Pulse count of the encoder that is connected to this motor.
+     * volatile because it's operated on in the functions that are only called from ISR.
      */
     volatile long encoder_pulse_cnt = 0;
+
+    /**
+     * We'll need this timestamp (coming from micros()) to determine speed
+     * when pulse count is changing.
+     * volatile because it's operated on in the functions that are only called from ISR.
+     */
+    volatile unsigned long timestamp_of_last_pulse = 0;
+
+    /**
+     * Speed of the wheel at the time of last encoder pulse. This is in terms of pulses 
+     * per second. If rad/s or m/s are required, then a separate function needs to be
+     * created.
+     * volatile because it's operated on in the functions that are only called from ISR.
+     */
+    volatile long wheel_speed = 0;
 
     /**
      * References of the left encoder and the right encoder. We'll initialise them too within encoder.h
@@ -112,8 +139,9 @@ class Encoder {
 
     /**
      * If threshold is on, then this will be set to TRUE.
+     * volatile because it's operated on in the functions that are only called from ISR.
      */
-    bool thresholdOn = false;
+    volatile bool thresholdOn = false;
 
     /**
      * A pointer to the motro control so that we can do something with the motor when the threshold has been reached.
@@ -123,8 +151,9 @@ class Encoder {
     /**
      * A threshold count. This will be set by setThreshold function. ISR will count this down or up and when
      * it reaches 0. the threshold will trigger.
+     * volatile because it's operated on in the functions that are only called from ISR.
      */
-    int thresholdCount = 0;
+    volatile int thresholdCount = 0;
 
     /**
      * Function to call (typically by the incEncPulseCnt or decEncPulseCnt functions which in turn should 
@@ -133,6 +162,25 @@ class Encoder {
     void thresholdReached() {
       clearThreshold();
       threshold_triggered_functionality->callBackFunction();
+    }
+
+    /**
+     * Calculates line speed and multiplies it by the passed coefficient before storing.
+     * The coefficient is typically either 1 for forward motion or -1 for backward motion,
+     * but other values can be used depending on usecase.
+     */
+    void calculate_wheel_speed(int coefficient) {
+      /*
+       * Claculating the speed of this wheel
+       */
+       unsigned long current_timestamp = micros();
+       
+       /*
+        * So 1 million microseconds (for 1 second) divided by the number of microseconds 
+        * between the last two pulses gives us number of pulses in second.
+        */
+       wheel_speed = ((long)coefficient) * USECONDS_IN_1_SECOND / (long)(current_timestamp - timestamp_of_last_pulse);
+       timestamp_of_last_pulse = current_timestamp;
     }
 };
 

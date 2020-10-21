@@ -314,11 +314,17 @@ void talk_about_it(bool do_delay, bool full_info) {
 //      Serial.println("Left sensor over line");
 //    }
 //
-//    Serial.print("Left wheel speed: ");
+//    Serial.print("Left wheel speed (line sens): ");
 //    Serial.println(LineSensor::getLeftWheelSpeed());
 //
-//    Serial.print("Right wheel speed: ");
+//    Serial.print("Right wheel speed (line sens): ");
 //    Serial.println(LineSensor::getRightWheelSpeed());
+//
+//    Serial.print("Left wheel speed (encoder): ");
+//    Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
+//
+//    Serial.print("Right wheel speed (encoder): ");
+//    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
 //
 //    Serial.print("Right encoder: ");
 //    Serial.println(Encoder::getRightEncoder()->getPulseCount());
@@ -333,9 +339,9 @@ void talk_about_it(bool do_delay, bool full_info) {
     Serial.print(", ");
     Serial.print(LineSensor::getRightWheelSpeed());
     Serial.print(", ");
-    Serial.print(Encoder::getRightEncoder()->getPulseCount());
+    Serial.print(Encoder::getLeftEncoder()->getWheelSpeed());
     Serial.print(", ");
-    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
+    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
   }
   
 //  Serial.print(LineSensor::getLeftSensor()->getCurrentSensorValue());
