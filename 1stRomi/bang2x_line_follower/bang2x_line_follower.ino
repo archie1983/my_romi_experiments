@@ -29,8 +29,6 @@ void setup() {
 bool follow = false;
 
 void loop() {
-  talk_about_it(true, true);
-  
   /*
    * If that's what user wants, follow the line
    */
@@ -42,6 +40,26 @@ void loop() {
   }
   
   act_on_commands();
+  event_scheduler();
+}
+
+long time_now = 0;
+long time_last_pid = 0;
+long time_last_report = 0;
+
+void event_scheduler() {
+  time_now = millis();
+
+  if (time_now - time_last_pid >= PID_UPDATE_TIME) {
+    long cur_speed = getRightWheelSpeed();
+    Motor::getRightMotor()->updateMotorPIDcontroller(cur_speed);
+    time_last_pid = time_now;
+  }
+
+  if (time_now - time_last_report >= REPORT_TIME) {
+    talk_about_it(false, true);
+    time_last_report = time_now;
+  }
 }
 
 /**
@@ -251,7 +269,11 @@ void act_on_commands() {
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
 
-    if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
+
+    if (in_cmd.indexOf("pid") > -1) { //# PID experiment
+      Serial.println("PID experiment");
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenSpeed(1000, 100);
+    } else if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
       Serial.println("Turning left");
       Motor::getRightMotor()->moveByCounts(steps_to_turn, 50);
       Motor::getLeftMotor()->moveByCounts(steps_to_turn, -50);
@@ -330,29 +352,33 @@ void talk_about_it(bool do_delay, bool full_info) {
 //      Serial.println("Left sensor over line");
 //    }
 //
-    Serial.print("Left wheel speed (line sens): ");
-    Serial.println(LineSensor::getLeftWheelSpeed_ms());
+//    Serial.print("Left wheel speed (line sens): ");
+//    Serial.println(LineSensor::getLeftWheelSpeed_ms());
+//
+//    Serial.print("Right wheel speed (line sens): ");
+//    Serial.println(LineSensor::getRightWheelSpeed_ms());
+//
+//    Serial.print("Left wheel speed raw (line sens): ");
+//    Serial.println(LineSensor::getLeftWheelSpeed());
+//
+//    Serial.print("Right wheel speed raw (line sens): ");
+//    Serial.println(LineSensor::getRightWheelSpeed());
 
-    Serial.print("Right wheel speed (line sens): ");
-    Serial.println(LineSensor::getRightWheelSpeed_ms());
+//    Serial.print("Left wheel speed (encoder): ");
+//    Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
 
-    Serial.print("Left wheel speed raw (line sens): ");
-    Serial.println(LineSensor::getLeftWheelSpeed());
+//    Serial.print("Right wheel speed (encoder): ");
+//    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
+//
+//    Serial.print("Right encoder: ");
+//    Serial.println(Encoder::getRightEncoder()->getPulseCount());
+//
+//    Serial.print("Left encoder: ");
+//    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
-    Serial.print("Right wheel speed raw (line sens): ");
-    Serial.println(LineSensor::getRightWheelSpeed());
+    Serial.print("Right wheel speed: ");
+    Serial.println(getRightWheelSpeed());
 
-    Serial.print("Left wheel speed (encoder): ");
-    Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
-
-    Serial.print("Right wheel speed (encoder): ");
-    Serial.println(Encoder::getRightEncoder()->getWheelSpeed());
-
-    Serial.print("Right encoder: ");
-    Serial.println(Encoder::getRightEncoder()->getPulseCount());
-
-    Serial.print("Left encoder: ");
-    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
     /**
      * For charting:.
@@ -379,4 +405,18 @@ void talk_about_it(bool do_delay, bool full_info) {
 //  Serial.print(LineSensor::getCentreSensor()->getBias());
 //  Serial.print(", ");
 //  Serial.print(LineSensor::getRightSensor()->getBias());
+}
+
+/**
+ * Returns current speed for the right wheel. It combines 
+ * wheel speed from the line sensor which is less accurate, but
+ * correctly detects 0 speed and the wheel speed from encoder
+ * which is more accurate but can't tell when speed is actually 0.
+ */
+long getRightWheelSpeed() {
+  if (LineSensor::getRightWheelSpeed() == 0) {
+    return 0;
+  } else {
+    return Encoder::getRightEncoder()->getWheelSpeed();
+  }
 }

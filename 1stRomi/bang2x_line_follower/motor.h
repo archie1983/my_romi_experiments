@@ -4,6 +4,7 @@
 #include "pin_names_and_constants.h"
 #include "threshold_callback.h"
 #include "encoder.h"
+#include "pid.h"
 
 /**
  * This class will control motor movement.
@@ -24,6 +25,32 @@ class Motor : public ThresholdCallback {
     void goBackwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
       turnMotor(-power);
       LineSensor::setThreshold(this, ms);
+    }
+
+    /**
+     * Turns the motor at a constant speed controlled by PID.
+     * 
+     * Rough idea for the speed limits can be gotten from the following:
+     * 
+     * Speed values for given motor powers without PID:
+     * 
+     * power | clicks per second
+     * --------------------------
+     *  25   |      77 - 90
+     *  100  |     280 - 300   
+     *  200  |     590 - 636
+     *  255  |     800 - 875
+     */
+    void goForwardForGivenTimeAtGivenSpeed(unsigned int ms, int motor_speed) {
+      last_requested_motor_speed = motor_speed;
+      //LineSensor::setThreshold(this, ms);
+    }
+
+    void updateMotorPIDcontroller(int current_motor_speed) {
+      float new_motor_power = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
+      //turnMotor(round(new_motor_power));
+      Serial.print("PID update: ");
+      Serial.println(new_motor_power);
     }
 
     /**
@@ -100,7 +127,6 @@ class Motor : public ThresholdCallback {
      * Callback function overridden from ThresholdCallback class that's been inherited.
      */
     void callBackFunction() {
-      Serial.print(4);
       stopMotor();
     }
   private:
@@ -109,10 +135,11 @@ class Motor : public ThresholdCallback {
      * It doesn't have to be public, because we'll only create instances of motor
      * within motor.h and those instances will be available through a static function.
      */
-    Motor(byte pinDirection, byte pinRun, Encoder* encoder) {
+    Motor(byte pinDirection, byte pinRun, Encoder* encoder, PID_c* pid_controller) {
       this->pinDirection = pinDirection;
       this->pinRun = pinRun;
       this->encoder = encoder;
+      this->pid_controller = pid_controller;
 
       pinMode(pinDirection, OUTPUT);
       pinMode(pinRun, OUTPUT);
@@ -138,6 +165,16 @@ class Motor : public ThresholdCallback {
      * Encoder for this motor.
      */
     Encoder* encoder;
+
+    /**
+     * PID controller for this motor
+     */
+    PID_c* pid_controller;
+
+    /**
+     * Last requested motor speed when running with PID
+     */
+    int last_requested_motor_speed;
     
     /**
      * Moves the motor to go forward or backward with a given PWM.
@@ -186,7 +223,7 @@ class Motor : public ThresholdCallback {
 /**
  * Instantiating our motors. We're passing the relevant pins and encoder for the motor.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder());
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder());
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.5, 0.0, 0.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.5, 0.0, 0.0));
 
 #endif

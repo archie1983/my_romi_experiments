@@ -122,11 +122,11 @@ class LineSensor {
     /**
      * Accessors for right and left wheel speeds.
      */
-    static int getRightWheelSpeed() {
+    static long getRightWheelSpeed() {
       return (right_enc_pulse_cnt_cur - right_enc_pulse_cnt_prev) * current_measurement_frequency;
     }
 
-    static int getLeftWheelSpeed() {
+    static long getLeftWheelSpeed() {
       return (left_enc_pulse_cnt_cur - left_enc_pulse_cnt_prev) * current_measurement_frequency;
     }
 

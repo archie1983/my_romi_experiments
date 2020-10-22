@@ -133,7 +133,7 @@ float PID_c::update(float demand, float measurement) {
   Ki_output = Ki * integral_error; 
 
   //Add the three components to get the total output
-  output_signal = Kp_output + Kd_output + Ki_output;
+  output_signal = -Kp_output - Kd_output - Ki_output;
 
   // Pass the result back.
   return output_signal;

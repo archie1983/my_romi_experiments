@@ -27,6 +27,12 @@
 #define MOTOR_BACKWARD HIGH
 
 /**
+ * Scheduler time constants
+ */
+#define PID_UPDATE_TIME 100 //# update time in ms for PID controller.
+#define REPORT_TIME 100 //# update time in ms for PID controller.
+
+/**
  * Encoder pins
  */
 #define RIGHT_ENCODER_XOR 7
