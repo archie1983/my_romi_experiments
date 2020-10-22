@@ -29,28 +29,23 @@ class Motor : public ThresholdCallback {
 
     /**
      * Turns the motor at a constant speed controlled by PID.
-     * 
-     * Rough idea for the speed limits can be gotten from the following:
-     * 
-     * Speed values for given motor powers without PID:
-     * 
-     * power | clicks per second
-     * --------------------------
-     *  25   |      77 - 90
-     *  100  |     280 - 300   
-     *  200  |     590 - 636
-     *  255  |     800 - 875
      */
     void goForwardForGivenTimeAtGivenSpeed(unsigned int ms, int motor_speed) {
       last_requested_motor_speed = motor_speed;
+      turnMotorAtGivenSpeed(motor_speed);
       //LineSensor::setThreshold(this, ms);
     }
 
     void updateMotorPIDcontroller(int current_motor_speed) {
-      float new_motor_power = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
+      float additional_required_speed = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
       //turnMotor(round(new_motor_power));
       Serial.print("PID update: ");
-      Serial.println(new_motor_power);
+      Serial.println(additional_required_speed);
+      Serial.print("New requested speed: ");
+      Serial.println(additional_required_speed + last_requested_motor_speed);
+      Serial.print("New requested power: ");
+      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
+      turnMotorAtGivenSpeed(additional_required_speed + last_requested_motor_speed);
     }
 
     /**
@@ -174,7 +169,7 @@ class Motor : public ThresholdCallback {
     /**
      * Last requested motor speed when running with PID
      */
-    int last_requested_motor_speed;
+    int last_requested_motor_speed = 0;
     
     /**
      * Moves the motor to go forward or backward with a given PWM.
@@ -212,9 +207,39 @@ class Motor : public ThresholdCallback {
     }
 
     /**
+     * Rough idea for the speed limits can be gotten from the following:
+     * 
+     * Speed values for given motor powers without PID:
+     * 
+     * power | clicks per second
+     * --------------------------
+     *  25   |      77 - 90
+     *  100  |     280 - 300   
+     *  200  |     590 - 636
+     *  255  |     800 - 875
+     *  
+     *  This kind of roughly comes to a relationship of around: 
+     *  
+     *  power = motor_speed / 3.5
+     *  It's not precise, but it will do as a starting point for PID.
+     */
+    void turnMotorAtGivenSpeed(int motor_speed) {
+      int motor_power = round(motor_speed / 3.5);
+      
+      if (motor_power > 255) {
+        motor_power = 255;
+      } else if (motor_power < -255) {
+        motor_power = -255;
+      }
+      
+      turnMotor(motor_power);
+    }
+
+    /**
      * Stops the motor.
      */
     void stopMotor() {
+      last_requested_motor_speed = 0;
       analogWrite(pinRun, 0);
       digitalWrite(pinDirection, LOW);
     }
@@ -223,7 +248,7 @@ class Motor : public ThresholdCallback {
 /**
  * Instantiating our motors. We're passing the relevant pins and encoder for the motor.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.5, 0.0, 0.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.5, 0.0, 0.0));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.8, 0.0, 0.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.8, 0.0, 0.0));
 
 #endif
