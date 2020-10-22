@@ -85,6 +85,15 @@ class Encoder {
 
     /**
      * Returns the speed of the wheel.
+     * 
+     * Gives roughly the following values for given motor powers without PID:
+     * 
+     * power | clicks per second
+     * --------------------------
+     *  25   |      77 - 90
+     *  100  |     280 - 300   
+     *  200  |     590 - 636
+     *  255  |     800 - 875
      */
     long getWheelSpeed() {
       return wheel_speed;

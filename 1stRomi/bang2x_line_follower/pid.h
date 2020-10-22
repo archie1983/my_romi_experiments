@@ -99,20 +99,38 @@ float PID_c::update(float demand, float measurement) {
   
   float time_delta = (float)diff_time;
 
-  // Calculate error between demand and measurement.
-  //float error = ????;
+  /**
+   * Calculate error between demand and measurement.
+   * Positive error means we've overshot (it delivers more than requested).
+   * Negative error means we've undershot (it delivers less than requested).
+   * 
+   * This is the Proportional component of required adjustment.
+   */
+  float error = measurement - demand;
 
-  //This represents the error derivative
-  // float error_delta = ?????;
-  // last_error = ????;
+  /**
+   * This represents the error derivative- the Derivative component of required adjustment.
+   * 
+   * In other words: By how much has the error changed since last time.
+   */
+  float error_delta = last_error - error;
+  last_error = error;
 
-  // Integral term.
-  // integral_error += ????;
+  /**
+   * Integral term- the Integral component of required adjustment.
+   * 
+   * In other words: Just an accumulation of the total error over time. 
+   * If we overshoot, this will get bigger, if we undershoot, this will get smaller.
+   * The problem is that this is like a punishment for past errors and it will
+   * get bigger very quickly if we have any error in the system, which is why the
+   * coefficient must be tiny for this.
+   */
+  integral_error += error;
 
   //Calculate P,I,D Term contributions.
-  // Kp_output = ????;
-  // Kd_output = ????; 
-  // Ki_output = ????; 
+  Kp_output = Kp * error;
+  Kd_output = Kd * error_delta; 
+  Ki_output = Ki * integral_error; 
 
   //Add the three components to get the total output
   output_signal = Kp_output + Kd_output + Ki_output;

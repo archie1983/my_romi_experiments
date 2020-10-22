@@ -275,6 +275,10 @@ void act_on_commands() {
       Serial.println("Driving BOTH motors forward");
       Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 200);
       Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 200);
+    } else if(in_cmd.indexOf("bothfMax") > -1) { //# if we want to drive both motors forward
+      Serial.println("Driving BOTH motors forward");
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 255);
+      Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 255);
     } else if(in_cmd.indexOf("bothf") > -1) { //# if we want to drive both motors forward
       Serial.println("Driving BOTH motors forward");
       Motor::getRightMotor()->goForwardByCounts(steps_to_move, 35);
@@ -331,6 +335,12 @@ void talk_about_it(bool do_delay, bool full_info) {
 
     Serial.print("Right wheel speed (line sens): ");
     Serial.println(LineSensor::getRightWheelSpeed_ms());
+
+    Serial.print("Left wheel speed raw (line sens): ");
+    Serial.println(LineSensor::getLeftWheelSpeed());
+
+    Serial.print("Right wheel speed raw (line sens): ");
+    Serial.println(LineSensor::getRightWheelSpeed());
 
     Serial.print("Left wheel speed (encoder): ");
     Serial.println(Encoder::getLeftEncoder()->getWheelSpeed());
