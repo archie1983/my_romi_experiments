@@ -28,17 +28,7 @@ void setup() {
  */
 bool follow = false;
 
-void loop() {
-  /*
-   * If that's what user wants, follow the line
-   */
-  if (follow) {
-    //bang2x();
-    bang2x_w();
-    //bang2x_w_timed();
-    //bang2x_w_variable_power();
-  }
-  
+void loop() {  
   act_on_commands();
   event_scheduler();
 }
@@ -46,6 +36,8 @@ void loop() {
 long time_now = 0;
 long time_last_pid = 0;
 long time_last_report = 0;
+long time_last_bang2x = 0;
+bool pid_enabled = false;
 
 void event_scheduler() {
   time_now = millis();
@@ -55,10 +47,42 @@ void event_scheduler() {
     time_last_report = time_now;
   }
 
-  if (time_now - time_last_pid >= PID_UPDATE_TIME) {
+  if (pid_enabled && time_now - time_last_pid >= PID_UPDATE_TIME) {
     long cur_speed = getRightWheelSpeed();
     Motor::getRightMotor()->updateMotorPIDcontroller(cur_speed);
     time_last_pid = time_now;
+  }
+
+  /*
+   * If that's what user wants and it's time for that, then follow the line
+   */
+  if (follow && time_now - time_last_bang2x >= BANG_BANG_TIME) {
+    //bang2x();
+    //bang2x_w();
+    //bang2x_w_timed();
+    bang2x_w_variable_power();
+    time_last_bang2x = time_now;
+  }
+}
+
+/**
+ * Calculates the weighed line sensor value as described in exercise 3 and returns it.
+ */
+float weighted_line_sensor() {
+  unsigned int left_value = LineSensor::getLeftSensor()->getCurrentSensorValueWhenReliableSignal();
+  unsigned int centre_value = LineSensor::getCentreSensor()->getCurrentSensorValueWhenReliableSignal();
+  unsigned int right_value = LineSensor::getRightSensor()->getCurrentSensorValueWhenReliableSignal();
+  
+  //float total_magnitude = left_value + centre_value + right_value;
+  float total_magnitude = left_value + centre_value + right_value;
+
+  if (total_magnitude > 0) {
+    float left_proportional = left_value / total_magnitude;
+    float right_proportional = right_value / total_magnitude;
+    
+    return left_proportional - right_proportional;
+  } else {
+    return 0.0;
   }
 }
 
@@ -66,14 +90,15 @@ void event_scheduler() {
  * Weighted line sensor bang-bang that drive wheels at non-constant power.
  */
 void bang2x_w_variable_power() {
-  delay(120);
   byte counts_to_run = 10;
   byte counts_to_turn = 10;
-  byte power_to_go_straight = 36;
+  byte power_to_go_straight = 150;
+  byte max_power_to_use = 255;//150; // 255
+  double tolerance = 0.3;
   
   float wls = weighted_line_sensor();
-  int power_right = wls * 255;
-  int power_left = wls * 255 * -1;
+  int power_right = wls * max_power_to_use;
+  int power_left = wls * max_power_to_use * -1;
 
   bool sensor_r = LineSensor::getRightSensor()->overLine();
   bool sensor_c = LineSensor::getCentreSensor()->overLine();
@@ -84,9 +109,10 @@ void bang2x_w_variable_power() {
   if (sensor_c) number_of_sensors_over_line++;
   if (sensor_l) number_of_sensors_over_line++;
 
-  talk_about_it(true, false);
-
-  if (abs(wls) > 0.1) { //# this only give chaotic movement
+  Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
+  Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
+  
+  if (abs(wls) > tolerance) { //# this only give chaotic movement
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
   //if (number_of_sensors_over_line < 3 && number_of_sensors_over_line > 0 && abs(wls) > 0.06) {
     /*
@@ -239,26 +265,6 @@ void bang2x() {
 }
 
 /**
- * Calculates the weighed line sensor value as described in exercise 3 and returns it.
- */
-float weighted_line_sensor() {
-  unsigned int left_value = LineSensor::getLeftSensor()->getCurrentSensorValue();
-  unsigned int centre_value = LineSensor::getCentreSensor()->getCurrentSensorValue();
-  unsigned int right_value = LineSensor::getRightSensor()->getCurrentSensorValue();
-  
-  float total_magnitude = left_value + centre_value + right_value;
-
-  if (total_magnitude > 0) {
-    float left_proportional = left_value / total_magnitude;
-    float right_proportional = right_value / total_magnitude;
-    
-    return left_proportional - right_proportional;
-  } else {
-    return 0.0;
-  }
-}
-
-/**
  * Reads a command from the Serial connection and acts on it
  */
 void act_on_commands() {
@@ -271,7 +277,14 @@ void act_on_commands() {
 
 
 
-    if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
+    if (in_cmd.indexOf("f12") > -1) { //# PID experiment
+      Serial.println("F12");
+      Motor::getRightMotor()->moveByCounts(100, 200);
+      //Motor::getRightMotor()->moveByCounts(1000, 12);
+    } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
+      Serial.println("PID experiment forw");
+      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, 100);
+    } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
       Serial.println("PID experiment forw");
       Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, 100);
     } else if (in_cmd.indexOf("pid-") > -1) { //# PID experiment
@@ -316,6 +329,8 @@ void act_on_commands() {
         Serial.println("Following line");
       } else {
         Serial.println("Stopped following line");
+        Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
+        Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
       }
     } else if(in_cmd.indexOf("calib") > -1) { //# if we want to recalibrate line sensors
       Serial.println("Re-calibrating line sensors.");
@@ -380,8 +395,8 @@ void talk_about_it(bool do_delay, bool full_info) {
 //    Serial.print("Left encoder: ");
 //    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
-    Serial.print("Right wheel speed: ");
-    Serial.println(getRightWheelSpeed());
+//    Serial.print("Right wheel speed: ");
+//    Serial.println(getRightWheelSpeed());
 
 
     /**

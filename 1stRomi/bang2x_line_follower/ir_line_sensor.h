@@ -25,6 +25,18 @@ class LineSensor {
     }
 
     /**
+     * Returns the current sensor value compensated for the if we think
+     * that we're over line. Otherwise returns 0.
+     */
+    unsigned int getCurrentSensorValueWhenReliableSignal() {
+      if (overLine() && currentReading > bias) {
+        return currentReading - bias;
+      } else {
+        return 0;
+      }
+    }
+
+    /**
      * A public static function to initialise the timer. Turns out that if we do this inside 
      * the constructor of LineSensor, then our configuration gets overwritten later, because
      * our instance is constructed before Arduino has initialised its stuff. So we have no

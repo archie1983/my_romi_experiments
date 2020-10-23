@@ -31,6 +31,7 @@
  */
 #define PID_UPDATE_TIME 100 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
+#define BANG_BANG_TIME 30
 
 /**
  * Encoder pins
