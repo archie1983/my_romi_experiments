@@ -30,7 +30,7 @@ class Motor : public ThresholdCallback {
     /**
      * Turns the motor at a constant speed controlled by PID.
      */
-    void goForwardForGivenTimeAtGivenSpeed(unsigned int ms, int motor_speed) {
+    void goForGivenTimeAtGivenSpeed(unsigned int ms, int motor_speed) {
       last_requested_motor_speed = motor_speed;
       turnMotorAtGivenSpeed(motor_speed);
       //LineSensor::setThreshold(this, ms);
@@ -254,7 +254,7 @@ class Motor : public ThresholdCallback {
  * Kp = 0.8 give more oscillation on changes, so use 0.6 for now.
  * Kd = 0.2 seems to compensate well enough for Kp caused oscillations.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.6, 0.0, 0.2));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.6, 0.0, 0.2));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.0, 3.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.8, 0.0, 0.2));
 
 #endif

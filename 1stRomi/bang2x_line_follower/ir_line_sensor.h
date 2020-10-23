@@ -426,15 +426,15 @@ void LineSensor::initialiseTimer3(long desired_frequency) {
       best_candidate_counter = current_candidate_counter;
     }
   }
-
-  Serial.print("Sensor update frequency: desired: ");
-  Serial.print(desired_frequency);
-  Serial.print(" best found: ");
-  Serial.print(best_candidate_frequency);
-  Serial.print(" prescaler: ");
-  Serial.print(pre_scaled_frequencies[best_candidate_pre_scaler]);
-  Serial.print(" counter: ");
-  Serial.println(best_candidate_counter);
+//
+//  Serial.print("Sensor update frequency: desired: ");
+//  Serial.print(desired_frequency);
+//  Serial.print(" best found: ");
+//  Serial.print(best_candidate_frequency);
+//  Serial.print(" prescaler: ");
+//  Serial.print(pre_scaled_frequencies[best_candidate_pre_scaler]);
+//  Serial.print(" counter: ");
+//  Serial.println(best_candidate_counter);
 
   /*
    * Now let's load the registers with the found values.

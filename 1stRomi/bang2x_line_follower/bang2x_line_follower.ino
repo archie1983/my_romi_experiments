@@ -270,9 +270,13 @@ void act_on_commands() {
     String in_cmd = Serial.readString();
 
 
-    if (in_cmd.indexOf("pid") > -1) { //# PID experiment
-      Serial.println("PID experiment");
-      Motor::getRightMotor()->goForwardForGivenTimeAtGivenSpeed(1000, 100);
+
+    if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
+      Serial.println("PID experiment forw");
+      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, 100);
+    } else if (in_cmd.indexOf("pid-") > -1) { //# PID experiment
+      Serial.println("PID experiment back");
+      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, -100);
     } else if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
       Serial.println("Turning left");
       Motor::getRightMotor()->moveByCounts(steps_to_turn, 50);
