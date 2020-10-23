@@ -253,6 +253,8 @@ class Motor : public ThresholdCallback {
  * Instantiating our motors. We're passing the relevant pins and encoder for the motor.
  * Kp = 0.8 give more oscillation on changes, so use 0.6 for now.
  * Kd = 0.2 seems to compensate well enough for Kp caused oscillations.
+ * 
+ * Kp = 0.2 Kd = 3.0 and Ki = 0.04 look like good candidate- very little oscillation and good adjustments.
  */
 Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.04, 3.0));
 Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.2, 0.04, 3.0));
