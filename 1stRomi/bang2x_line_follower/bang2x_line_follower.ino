@@ -50,15 +50,15 @@ long time_last_report = 0;
 void event_scheduler() {
   time_now = millis();
 
+  if (time_now - time_last_report >= REPORT_TIME) {
+    talk_about_it(false, true);
+    time_last_report = time_now;
+  }
+
   if (time_now - time_last_pid >= PID_UPDATE_TIME) {
     long cur_speed = getRightWheelSpeed();
     Motor::getRightMotor()->updateMotorPIDcontroller(cur_speed);
     time_last_pid = time_now;
-  }
-
-  if (time_now - time_last_report >= REPORT_TIME) {
-    talk_about_it(false, true);
-    time_last_report = time_now;
   }
 }
 
@@ -376,8 +376,8 @@ void talk_about_it(bool do_delay, bool full_info) {
 //    Serial.print("Left encoder: ");
 //    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
-    Serial.print("Right wheel speed: ");
-    Serial.println(getRightWheelSpeed());
+//    Serial.print("Right wheel speed: ");
+//    Serial.println(getRightWheelSpeed());
 
 
     /**

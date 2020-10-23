@@ -71,9 +71,11 @@ void PID_c::reset() {
   last_millis     = millis();
 }
 
-/*
-   This function sets the gains of the PID controller
-*/
+/**
+ * This function sets the gains of the PID controller.
+ * 
+ * Make sure that P < 1.0 otherwise we get to oscillations very quick.
+ */
 void PID_c::setGains(float P, float I, float D) {
   Kp = P;
   Kd = D;
@@ -113,7 +115,7 @@ float PID_c::update(float demand, float measurement) {
    * 
    * In other words: By how much has the error changed since last time.
    */
-  float error_delta = last_error - error;
+  float error_delta = (error - last_error) / time_delta;
   last_error = error;
 
   /**
@@ -134,6 +136,19 @@ float PID_c::update(float demand, float measurement) {
 
   //Add the three components to get the total output
   output_signal = -Kp_output - Kd_output - Ki_output;
+
+//  Serial.print("Err: ");
+//  Serial.print(error);
+//  Serial.print(" Err_d: ");
+//  Serial.print(error_delta);
+//  Serial.print(" time_d: ");
+//  Serial.println(time_delta);
+//  Serial.print(" Kp_output: ");
+//  Serial.println(Kp_output);
+//  Serial.print(" Kd_output: ");
+//  Serial.println(Kd_output);
+//  Serial.print(" output_signal: ");
+//  Serial.println(output_signal);
 
   // Pass the result back.
   return output_signal;

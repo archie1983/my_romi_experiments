@@ -39,12 +39,16 @@ class Motor : public ThresholdCallback {
     void updateMotorPIDcontroller(int current_motor_speed) {
       float additional_required_speed = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
       //turnMotor(round(new_motor_power));
-      Serial.print("PID update: ");
+//      Serial.print("PID update: ");
+//      Serial.println(additional_required_speed);
+//      Serial.print("New requested speed: ");
+//      Serial.println(additional_required_speed + last_requested_motor_speed);
+//      Serial.print("New requested power: ");
+//      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
+
+      Serial.print(current_motor_speed);
+      Serial.print(", ");
       Serial.println(additional_required_speed);
-      Serial.print("New requested speed: ");
-      Serial.println(additional_required_speed + last_requested_motor_speed);
-      Serial.print("New requested power: ");
-      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
       turnMotorAtGivenSpeed(additional_required_speed + last_requested_motor_speed);
     }
 
@@ -247,8 +251,10 @@ class Motor : public ThresholdCallback {
 
 /**
  * Instantiating our motors. We're passing the relevant pins and encoder for the motor.
+ * Kp = 0.8 give more oscillation on changes, so use 0.6 for now.
+ * Kd = 0.2 seems to compensate well enough for Kp caused oscillations.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.8, 0.0, 0.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.8, 0.0, 0.0));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.6, 0.0, 0.2));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.6, 0.0, 0.2));
 
 #endif
