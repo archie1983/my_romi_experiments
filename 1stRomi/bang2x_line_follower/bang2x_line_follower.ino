@@ -380,8 +380,8 @@ void talk_about_it(bool do_delay, bool full_info) {
 //    Serial.print("Left encoder: ");
 //    Serial.println(Encoder::getLeftEncoder()->getPulseCount());
 
-//    Serial.print("Right wheel speed: ");
-//    Serial.println(getRightWheelSpeed());
+    Serial.print("Right wheel speed: ");
+    Serial.println(getRightWheelSpeed());
 
 
     /**

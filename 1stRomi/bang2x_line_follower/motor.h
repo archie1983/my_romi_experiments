@@ -46,9 +46,9 @@ class Motor : public ThresholdCallback {
 //      Serial.print("New requested power: ");
 //      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
 
-      Serial.print(current_motor_speed);
-      Serial.print(", ");
-      Serial.println(additional_required_speed);
+//      Serial.print(current_motor_speed);
+//      Serial.print(", ");
+//      Serial.println(additional_required_speed);
       turnMotorAtGivenSpeed(additional_required_speed + last_requested_motor_speed);
     }
 
@@ -254,7 +254,7 @@ class Motor : public ThresholdCallback {
  * Kp = 0.8 give more oscillation on changes, so use 0.6 for now.
  * Kd = 0.2 seems to compensate well enough for Kp caused oscillations.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.0, 3.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.8, 0.0, 0.2));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.04, 3.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.2, 0.04, 3.0));
 
 #endif
