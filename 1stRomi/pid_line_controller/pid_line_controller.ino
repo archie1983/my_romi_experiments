@@ -35,9 +35,9 @@ void loop() {
 }
 
 long time_now = 0;
-long time_last_pid = 0;
 long time_last_report = 0;
-long time_last_bang2x = 0;
+long time_last_mpid = 0;
+long time_last_hpid = 0;
 bool pid_enabled = false;
 
 void event_scheduler() {
@@ -48,18 +48,22 @@ void event_scheduler() {
     time_last_report = time_now;
   }
 
-  if (pid_enabled && time_now - time_last_pid >= PID_UPDATE_TIME) {
+  /**
+   * These motor PIDs may need to be updated even if we're not following a line.
+   * We may be just going forward or back for a given time.
+   */
+  if ((pid_enabled || follow) && time_now - time_last_mpid >= MOTOR_PID_UPDATE_TIME) {
     Motor::getRightMotor()->updateMotorPIDcontroller(getRightWheelSpeed());
     Motor::getLeftMotor()->updateMotorPIDcontroller(getLeftWheelSpeed());
-    time_last_pid = time_now;
+    time_last_mpid = time_now;
   }
 
   /*
    * If that's what user wants and it's time for that, then follow the line
    */
-  if (follow && time_now - time_last_bang2x >= BANG_BANG_TIME) {
+  if (follow && time_now - time_last_hpid >= HEADING_PID_UPDATE_TIME) {
     nested_pid_weighed_sensors();
-    time_last_bang2x = time_now;
+    time_last_hpid = time_now;
   }
 }
 
@@ -100,7 +104,9 @@ PID_c heading_pid(0.2, 0.04, 3.0);
  * running with a nested PID controller. We'll be sending this value adjusted 
  * by the heading_correction parameter. This is roughly half the power.
  */
-int nominal_speed_pid = 400;
+int nominal_speed_pid = 200;
+int new_speed_right = 0;
+int new_speed_left = 0;
 double heading_tolerance = 0.3;
 
 /**
@@ -142,8 +148,8 @@ void nested_pid_weighed_sensors() {
    * If heading correction is negative, then we'll supply more power to the left motor
    * and less power to the right one, thus causing a turn.
    */
-  int new_speed_right = nominal_speed_pid * heading_correction;
-  int new_speed_left = nominal_speed_pid * heading_correction * -1;
+  new_speed_right = nominal_speed_pid * heading_correction;
+  new_speed_left = nominal_speed_pid * heading_correction * -1;
 
   if (abs(wls) > heading_tolerance) {
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
@@ -161,7 +167,7 @@ void nested_pid_weighed_sensors() {
     Serial.print(" # ");
     Serial.print(new_speed_left);
     Serial.print(" wls=");
-    Serial.println(wls);
+    Serial.println(heading_correction);
     Motor::getRightMotor()->setRequestedSpeed_PID(new_speed_right);
     Motor::getLeftMotor()->setRequestedSpeed_PID(new_speed_left);
   } else {
@@ -235,11 +241,13 @@ void act_on_commands() {
       follow = !follow;
 
       if (follow) {
+        heading_pid.reset();
         Serial.println("Following line");
       } else {
         Serial.println("Stopped following line");
         Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
         Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
+        heading_pid.reset();
       }
     } else if(in_cmd.indexOf("calib") > -1) { //# if we want to recalibrate line sensors
       Serial.println("Re-calibrating line sensors.");

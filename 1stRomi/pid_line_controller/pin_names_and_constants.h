@@ -29,9 +29,9 @@
 /**
  * Scheduler time constants
  */
-#define PID_UPDATE_TIME 100 //# update time in ms for PID controller.
+#define MOTOR_PID_UPDATE_TIME 10 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
-#define BANG_BANG_TIME 30
+#define HEADING_PID_UPDATE_TIME 25 //# update time in ms for PID controller.
 
 /**
  * Encoder pins
