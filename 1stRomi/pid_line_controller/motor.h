@@ -73,6 +73,28 @@ class Motor : public ThresholdCallback {
     }
 
     /**
+     * Accessor for the last requested motor speed.
+     */
+    int getLastRequestedMotorSpeed_PID() {
+      return last_requested_motor_speed;
+    }
+
+    /**
+     * Applies a coefficient calculated by the heading PID to the speed that 
+     * needs to be requested from the motor PIDs.
+     */
+    void updateRequestedSpeedByAFactor_PID(float correction_factor) {
+      last_requested_motor_speed = correction_factor * last_requested_motor_speed;
+    }
+
+    /**
+     * Sets the target speed for the motro PID.
+     */
+    void setRequestedSpeed_PID(int new_speed) {
+      last_requested_motor_speed = new_speed;
+    }
+    
+    /**
      * Runs the motor forward for for the specified amount of encoder counts at 35 PWM power
      */
     void goForwardByCounts(unsigned int counts) {

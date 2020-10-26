@@ -1,6 +1,7 @@
 #include "pin_names_and_constants.h"
 #include "ir_line_sensor.h"
 #include "motor.h"
+#include "pid.h"
 
 void setup() {
   // Start Serial monitor and print "reset"
@@ -84,20 +85,48 @@ float weighted_line_sensor() {
 }
 
 /**
+ * This will be our heading PID controller. The input will be the weighed line sensor value [-1.0, 1.0].
+ * The output naturally will also be a value with boundaries [-1.0, 1.0]. We'll be setting the bias to
+ * 0 to get the robot to go straight and to some positive or negative value withing the same boundaries
+ * [-1.0, 1.0] to get it to turn left or right.
+ * 
+ * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
+ * the other.
+ */
+PID_c heading_pid(0.2, 0.04, 3.0);
+
+/**
+ * This will be nominal speed for the motors (encoder counts per second) when 
+ * running with a nested PID controller. We'll be sending this value adjusted 
+ * by the heading_correction parameter. This is roughly half the power.
+ */
+int nominal_speed_pid = 400;
+double heading_tolerance = 0.3;
+
+/**
  * Weighted line sensor nested PID controller. Here we have an instance of a PID controller,
  * which drives another two PID instances- one for each wheel.
  */
 void nested_pid_weighed_sensors() {
-  byte counts_to_run = 10;
-  byte counts_to_turn = 10;
-  byte power_to_go_straight = 150;
-  byte max_power_to_use = 255;//150; // 255
-  double tolerance = 0.3;
-  
-  float wls = weighted_line_sensor();
-  int power_right = wls * max_power_to_use;
-  int power_left = wls * max_power_to_use * -1;
 
+  /**
+   * wls will be our measurement.
+   */
+  float wls = weighted_line_sensor();
+  
+  /**
+   * Demand of 0.0 should keep it going straight.
+   * 
+   * The heading_correction will be our PID output.
+   */
+  float heading_correction = heading_pid.update(0.0, wls);
+
+  /**
+   * The rest should follow almost the same algorithm as weighed sensor bang-bang did,
+   * setting the demanded speed to either of the wheels. The only difference is that
+   * heading_correction is a correction measure, not an absolute value, so we should
+   * update the current speed of either motor with regards to the heading_correction.
+   */
   bool sensor_r = LineSensor::getRightSensor()->overLine();
   bool sensor_c = LineSensor::getCentreSensor()->overLine();
   bool sensor_l = LineSensor::getLeftSensor()->overLine();
@@ -107,10 +136,16 @@ void nested_pid_weighed_sensors() {
   if (sensor_c) number_of_sensors_over_line++;
   if (sensor_l) number_of_sensors_over_line++;
 
-  Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
-  Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
-  
-  if (abs(wls) > tolerance) { //# this only give chaotic movement
+  /**
+   * If heading correction is positive, then we'll supply more power to the right motor
+   * and less power to the left one.
+   * If heading correction is negative, then we'll supply more power to the left motor
+   * and less power to the right one, thus causing a turn.
+   */
+  int new_speed_right = nominal_speed_pid * heading_correction;
+  int new_speed_left = nominal_speed_pid * heading_correction * -1;
+
+  if (abs(wls) > heading_tolerance) {
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
   //if (number_of_sensors_over_line < 3 && number_of_sensors_over_line > 0 && abs(wls) > 0.06) {
     /*
@@ -121,21 +156,21 @@ void nested_pid_weighed_sensors() {
      * If left motor is being driven stronger than the right, then we're turning right
      * and vice versa.
      */
-    Serial.print(power_right < power_left ? "right : " : "left : ");
-    Serial.print(power_right);
+    Serial.print(new_speed_right < new_speed_left ? "right : " : "left : ");
+    Serial.print(new_speed_right);
     Serial.print(" # ");
-    Serial.print(power_left);
+    Serial.print(new_speed_left);
     Serial.print(" wls=");
     Serial.println(wls);
-    Motor::getRightMotor()->goAtGivenSpeed_PID(power_right);
-    Motor::getLeftMotor()->moveByCounts(counts_to_turn, power_left);
+    Motor::getRightMotor()->setRequestedSpeed_PID(new_speed_right);
+    Motor::getLeftMotor()->setRequestedSpeed_PID(new_speed_left);
   } else {
     /*
      * going straight 
      */
     Serial.println("Going straight");
-    Motor::getRightMotor()->moveByCounts(counts_to_run, power_to_go_straight);
-    Motor::getLeftMotor()->moveByCounts(counts_to_run, power_to_go_straight);
+    Motor::getRightMotor()->setRequestedSpeed_PID(nominal_speed_pid);
+    Motor::getLeftMotor()->setRequestedSpeed_PID(nominal_speed_pid);
   }
 }
 
