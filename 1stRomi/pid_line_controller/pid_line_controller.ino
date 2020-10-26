@@ -97,7 +97,7 @@ float weighted_line_sensor() {
  * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
  * the other.
  */
-PID_c heading_pid(0.2, 0.04, 3.0);
+PID_c heading_pid(0.7, 0.04, 3.0);
 
 /**
  * This will be nominal speed for the motors (encoder counts per second) when 
@@ -148,8 +148,8 @@ void nested_pid_weighed_sensors() {
    * If heading correction is negative, then we'll supply more power to the left motor
    * and less power to the right one, thus causing a turn.
    */
-  new_speed_right = nominal_speed_pid * heading_correction;
-  new_speed_left = nominal_speed_pid * heading_correction * -1;
+  new_speed_right = nominal_speed_pid * heading_correction * -1;
+  new_speed_left = nominal_speed_pid * heading_correction;
 
   if (abs(wls) > heading_tolerance) {
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
@@ -175,6 +175,7 @@ void nested_pid_weighed_sensors() {
      * going straight 
      */
     Serial.println("Going straight");
+    //heading_pid.reset();
     Motor::getRightMotor()->setRequestedSpeed_PID(nominal_speed_pid);
     Motor::getLeftMotor()->setRequestedSpeed_PID(nominal_speed_pid);
   }
