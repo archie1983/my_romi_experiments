@@ -28,28 +28,48 @@ class Motor : public ThresholdCallback {
     }
 
     /**
-     * Turns the motor at a constant speed controlled by PID.
+     * Turns the motor at a constant speed controlled by PID for a given amount
+     * of ms.
      */
-    void goForGivenTimeAtGivenSpeed(unsigned int ms, int motor_speed) {
+    void goForGivenTimeAtGivenSpeed_PID(unsigned int ms, int motor_speed) {
       last_requested_motor_speed = motor_speed;
-      turnMotorAtGivenSpeed(motor_speed);
-      //LineSensor::setThreshold(this, ms);
+      turnMotor(convertMotorSpeedToPWM(motor_speed));
+      LineSensor::setThreshold(this, ms);
     }
 
-    void updateMotorPIDcontroller(int current_motor_speed) {
-      float additional_required_speed = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
-      //turnMotor(round(new_motor_power));
-//      Serial.print("PID update: ");
-//      Serial.println(additional_required_speed);
-//      Serial.print("New requested speed: ");
-//      Serial.println(additional_required_speed + last_requested_motor_speed);
-//      Serial.print("New requested power: ");
-//      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
+    /**
+     * Turns the motor at a constant speed controlled by PID.
+     */
+    void goAtGivenSpeed_PID(int motor_speed) {
+      last_requested_motor_speed = motor_speed;
+      turnMotor(convertMotorSpeedToPWM(motor_speed));
+    }
 
-//      Serial.print(current_motor_speed);
-//      Serial.print(", ");
-//      Serial.println(additional_required_speed);
-      turnMotorAtGivenSpeed(additional_required_speed + last_requested_motor_speed);
+    /**
+     * Performs the PID update and compensates motor power accordingly to the
+     * PID output.
+     */
+    void updateMotorPIDcontroller(int current_motor_speed) {
+      /**
+       * We only want to operate the PID controller if the demand speed is non zero.
+       * If it is zero thought, then the motor should have been stopped by now and we
+       * are not to start running it again with some residue PID result.
+       */
+      if (last_requested_motor_speed != 0) {
+        float additional_required_speed = this->pid_controller->update(last_requested_motor_speed, current_motor_speed);
+        //turnMotor(round(new_motor_power));
+  //      Serial.print("PID update: ");
+  //      Serial.println(additional_required_speed);
+  //      Serial.print("New requested speed: ");
+  //      Serial.println(additional_required_speed + last_requested_motor_speed);
+  //      Serial.print("New requested power: ");
+  //      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
+  
+  //      Serial.print(current_motor_speed);
+  //      Serial.print(", ");
+  //      Serial.println(additional_required_speed);
+        turnMotor(convertMotorSpeedToPWM(additional_required_speed + last_requested_motor_speed));
+      }
     }
 
     /**
@@ -211,11 +231,15 @@ class Motor : public ThresholdCallback {
     }
 
     /**
+     * Roughly converts motor speed to its corresponding PWM. This is not required
+     * to be very precise, because we'll be controlling the PWM with PID anyway,
+     * but as the start figure this should be good enough.
+     * 
      * Rough idea for the speed limits can be gotten from the following:
      * 
      * Speed values for given motor powers without PID:
      * 
-     * power | clicks per second
+     * power | clicks per second (a.k.a speed)
      * --------------------------
      *  25   |      77 - 90
      *  100  |     280 - 300   
@@ -227,7 +251,7 @@ class Motor : public ThresholdCallback {
      *  power = motor_speed / 3.5
      *  It's not precise, but it will do as a starting point for PID.
      */
-    void turnMotorAtGivenSpeed(int motor_speed) {
+    int convertMotorSpeedToPWM(int motor_speed) {
       int motor_power = round(motor_speed / 3.5);
       
       if (motor_power > 255) {
@@ -235,17 +259,22 @@ class Motor : public ThresholdCallback {
       } else if (motor_power < -255) {
         motor_power = -255;
       }
-      
-      turnMotor(motor_power);
+
+      return motor_power;
     }
 
     /**
      * Stops the motor.
      */
     void stopMotor() {
-      last_requested_motor_speed = 0;
       analogWrite(pinRun, 0);
       digitalWrite(pinDirection, LOW);
+
+      /**
+       * PID things.
+       */
+      this->pid_controller->reset();
+      last_requested_motor_speed = 0;
     }
 };
 
@@ -257,6 +286,6 @@ class Motor : public ThresholdCallback {
  * Kp = 0.2 Kd = 3.0 and Ki = 0.04 look like good candidate- very little oscillation and good adjustments.
  */
 Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.04, 3.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.2, 0.04, 3.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.5, 0.08, 4.0));
 
 #endif

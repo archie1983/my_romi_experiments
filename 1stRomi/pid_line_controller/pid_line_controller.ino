@@ -43,13 +43,13 @@ void event_scheduler() {
   time_now = millis();
 
   if (time_now - time_last_report >= REPORT_TIME) {
-    talk_about_it(false, true);
+    talk_about_it(true);
     time_last_report = time_now;
   }
 
   if (pid_enabled && time_now - time_last_pid >= PID_UPDATE_TIME) {
-    long cur_speed = getRightWheelSpeed();
-    Motor::getRightMotor()->updateMotorPIDcontroller(cur_speed);
+    Motor::getRightMotor()->updateMotorPIDcontroller(getRightWheelSpeed());
+    Motor::getLeftMotor()->updateMotorPIDcontroller(getLeftWheelSpeed());
     time_last_pid = time_now;
   }
 
@@ -57,10 +57,7 @@ void event_scheduler() {
    * If that's what user wants and it's time for that, then follow the line
    */
   if (follow && time_now - time_last_bang2x >= BANG_BANG_TIME) {
-    //bang2x();
-    //bang2x_w();
-    //bang2x_w_timed();
-    bang2x_w_variable_power();
+    nested_pid_weighed_sensors();
     time_last_bang2x = time_now;
   }
 }
@@ -87,9 +84,10 @@ float weighted_line_sensor() {
 }
 
 /**
- * Weighted line sensor bang-bang that drive wheels at non-constant power.
+ * Weighted line sensor nested PID controller. Here we have an instance of a PID controller,
+ * which drives another two PID instances- one for each wheel.
  */
-void bang2x_w_variable_power() {
+void nested_pid_weighed_sensors() {
   byte counts_to_run = 10;
   byte counts_to_turn = 10;
   byte power_to_go_straight = 150;
@@ -129,7 +127,7 @@ void bang2x_w_variable_power() {
     Serial.print(power_left);
     Serial.print(" wls=");
     Serial.println(wls);
-    Motor::getRightMotor()->moveByCounts(counts_to_turn, power_right);
+    Motor::getRightMotor()->goAtGivenSpeed_PID(power_right);
     Motor::getLeftMotor()->moveByCounts(counts_to_turn, power_left);
   } else {
     /*
@@ -142,154 +140,30 @@ void bang2x_w_variable_power() {
 }
 
 /**
- * Weighted line sensor bang-bang with timed motor runs (not counting pulses)
- */
-void bang2x_w_timed() {
-  byte time_to_run = 10;
-  byte time_to_turn = 20;
-  byte power_to_go_straight = 36;
-  byte power_to_turn = 36;
-  
-  float wls = 0.0;
-
-  bool sensor_r = LineSensor::getRightSensor()->overLine();
-  bool sensor_c = LineSensor::getCentreSensor()->overLine();
-  bool sensor_l = LineSensor::getLeftSensor()->overLine();
-
-  if (sensor_l || sensor_c || sensor_r) {
-    wls = weighted_line_sensor();
-  }
-
-  if(wls < -0.1) {
-    Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(time_to_turn, power_to_turn);
-    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("Turn right");
-  } else if(wls > 0.1) {
-    Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(time_to_turn, power_to_turn);
-    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("Turn left");
-  } else {
-    Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(time_to_run, power_to_go_straight);
-    Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(time_to_run, power_to_go_straight);
-    Serial.println("Go straight");
-  }
-}
-
-/**
- * Weighted line sensor bang-bang
- */
-void bang2x_w() {
-
-  //talk_about_it(true, false);
-  
-  int steps_to_move = 10;
-  int steps_to_turn = 20;
-  float wls = 0.0;
-
-  bool sensor_r = LineSensor::getRightSensor()->overLine();
-  bool sensor_c = LineSensor::getCentreSensor()->overLine();
-  bool sensor_l = LineSensor::getLeftSensor()->overLine();
-
-  if (sensor_l || sensor_c || sensor_r) {
-    wls = weighted_line_sensor();
-  }
-
-  if(wls < -0.1) {
-    Motor::getLeftMotor()->goForwardByCounts(steps_to_turn);
-    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("Turn right");
-  } else if(wls > 0.1) {
-    Motor::getRightMotor()->goForwardByCounts(steps_to_turn);
-    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("Turn left");
-  } else {
-    Motor::getRightMotor()->goForwardByCounts(steps_to_move);
-    Motor::getLeftMotor()->goForwardByCounts(steps_to_move);
-    Serial.println("Go straight");
-  }
-}
-
-/**
- * Bang-bang controller. A simple reaction to the current readings of the sensor.
- */
-void bang2x() {
-  delay(50);
-  bool sensor_r = LineSensor::getRightSensor()->overLine();
-  bool sensor_c = LineSensor::getCentreSensor()->overLine();
-  bool sensor_l = LineSensor::getLeftSensor()->overLine();
-  /*
-   * Ok, so we have 3 sensors and each of them can either be over the line or off line. That's 8 combinations.
-   * 1) If no sensors are over the line, then we need to find the line. Drive forward for now very slowly.
-   * 2) If left sensor only is over the line, then we want to turn more left
-   * 3) If only centre sensor is over the line, then carry on straight. This is an error state and shouldn't normally happen.
-   * 4) If Left and and centre sensor is over the line, then still turn more left, but less so or slower.
-   * 5) If right sensor only is over the line, then we want to turn more right.
-   * 6) If both right and left sensors are over the line, but not the centre one, then just go forward, this is another error state and shouldn't happen normally.
-   * 7) If right and centre sensors are over the line, then still turn more right, but less so or slower.
-   * 8) If all sensors are over the line, then carry on straight, we're doing a good job.
-   */
-  
-  if (!sensor_r && !sensor_c && !sensor_l) { //# rule 1
-    Motor::getRightMotor()->goForwardByCounts(5);
-    Motor::getLeftMotor()->goForwardByCounts(5);
-    Serial.println("rule1");
-  } else if(!sensor_r && !sensor_c && sensor_l) {//# rule 2
-    Motor::getRightMotor()->goForwardByCounts(25);
-    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("rule2");
-  } else if(!sensor_r && sensor_c && !sensor_l) {//# rule 3
-    Motor::getRightMotor()->goForwardByCounts(25);
-    Motor::getLeftMotor()->goForwardByCounts(25);
-    Serial.println("rule3");
-  } else if(!sensor_r && sensor_c && sensor_l) {//# rule 4
-    Motor::getRightMotor()->goForwardByCounts(12);
-    Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("rule4");
-  } else if(sensor_r && !sensor_c && !sensor_l) {//# rule 5
-    Motor::getLeftMotor()->goForwardByCounts(25);
-    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("rule5");
-  } else if(sensor_r && !sensor_c && sensor_l) {//# rule 6
-    Motor::getRightMotor()->goForwardByCounts(25);
-    Motor::getLeftMotor()->goForwardByCounts(25);
-    Serial.println("rule6");
-  } else if(sensor_r && sensor_c && !sensor_l) {//# rule 7
-    Motor::getLeftMotor()->goForwardByCounts(12);
-    Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
-    Serial.println("rule7");
-  } else if(sensor_r && sensor_c && sensor_l) {//# rule 8
-    Motor::getRightMotor()->goForwardByCounts(25);
-    Motor::getLeftMotor()->goForwardByCounts(25);
-    Serial.println("rule8");
-  }
-}
-
-/**
  * Reads a command from the Serial connection and acts on it
  */
 void act_on_commands() {
   int steps_to_move = 200;
   int steps_to_turn = 100;
   int time_to_turn = 200;
+  int initial_pid_speed = 600;
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
-
-
-
     if (in_cmd.indexOf("f12") > -1) { //# PID experiment
       Serial.println("F12");
       Motor::getRightMotor()->moveByCounts(100, 200);
       //Motor::getRightMotor()->moveByCounts(1000, 12);
-    } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
+    } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment moving forward
       Serial.println("PID experiment forw");
-      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, 100);
-    } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment
-      Serial.println("PID experiment forw");
-      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, 100);
-    } else if (in_cmd.indexOf("pid-") > -1) { //# PID experiment
+      //Motor::getRightMotor()->goAtGivenSpeed_PID(100);
+      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed_PID(5000, initial_pid_speed);
+      Motor::getLeftMotor()->goForGivenTimeAtGivenSpeed_PID(5000, initial_pid_speed);
+    } else if (in_cmd.indexOf("pid-") > -1) { //# PID experiment moving back
       Serial.println("PID experiment back");
-      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed(1000, -100);
+      //Motor::getRightMotor()->goAtGivenSpeed_PID(-100);
+      Motor::getRightMotor()->goForGivenTimeAtGivenSpeed_PID(5000, -initial_pid_speed);
+      Motor::getLeftMotor()->goForGivenTimeAtGivenSpeed_PID(5000, -initial_pid_speed);
     } else if (in_cmd.indexOf("left") > -1) { //# if we want to drive the left motor
       Serial.println("Turning left");
       Motor::getRightMotor()->moveByCounts(steps_to_turn, 50);
@@ -349,12 +223,9 @@ void act_on_commands() {
 
 /**
  * Prints out information about line sensors.
- * do_delay : a flag of whether we want to do a delay or not
  * full_info : a flag of wether we want to print out all info (including wether the sensor is over line or not) or just the sensor values (good for plotting)
  */
-void talk_about_it(bool do_delay, bool full_info) {
-  if (do_delay) delay(300);
-
+void talk_about_it(bool full_info) {
   if (full_info) {
 //    Serial.print("Weighed sensor: ");
 //    Serial.println(weighted_line_sensor());
@@ -437,5 +308,19 @@ long getRightWheelSpeed() {
     return 0;
   } else {
     return Encoder::getRightEncoder()->getWheelSpeed();
+  }
+}
+
+/**
+ * Returns current speed for the left wheel. It combines 
+ * wheel speed from the line sensor which is less accurate, but
+ * correctly detects 0 speed and the wheel speed from encoder
+ * which is more accurate but can't tell when speed is actually 0.
+ */
+long getLeftWheelSpeed() {
+  if (LineSensor::getLeftWheelSpeed() == 0) {
+    return 0;
+  } else {
+    return Encoder::getLeftEncoder()->getWheelSpeed();
   }
 }
