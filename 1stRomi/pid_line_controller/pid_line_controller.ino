@@ -2,6 +2,7 @@
 #include "ir_line_sensor.h"
 #include "motor.h"
 #include "pid.h"
+#include "kinematics.h"
 
 void setup() {
   // Start Serial monitor and print "reset"
@@ -25,6 +26,22 @@ void setup() {
 }
 
 /**
+ * This will be our heading PID controller. The input will be the weighed line sensor value [-1.0, 1.0].
+ * The output naturally will also be a value with boundaries [-1.0, 1.0]. We'll be setting the bias to
+ * 0 to get the robot to go straight and to some positive or negative value withing the same boundaries
+ * [-1.0, 1.0] to get it to turn left or right.
+ * 
+ * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
+ * the other.
+ */
+PID_c heading_pid(0.7, 0.04, 3.0);
+
+/**
+ * Kinematics data.
+ */
+kinematics_c kinematics;
+
+/**
  * A flag of whether we want to follow the line or not.
  */
 bool follow = false;
@@ -36,6 +53,7 @@ void loop() {
 
 long time_now = 0;
 long time_last_report = 0;
+long time_last_kinematics_update = 0;
 long time_last_mpid = 0;
 long time_last_hpid = 0;
 bool pid_enabled = false;
@@ -65,6 +83,14 @@ void event_scheduler() {
     nested_pid_weighed_sensors();
     time_last_hpid = time_now;
   }
+
+  /**
+   * Updating kinematics if it's time.
+   */
+  if (time_now - time_last_kinematics_update >= KINEMATICS_UPDATE_TIME){
+    kinematics.update();
+    time_last_kinematics_update = time_now;
+  }
 }
 
 /**
@@ -87,17 +113,6 @@ float weighted_line_sensor() {
     return 0.0;
   }
 }
-
-/**
- * This will be our heading PID controller. The input will be the weighed line sensor value [-1.0, 1.0].
- * The output naturally will also be a value with boundaries [-1.0, 1.0]. We'll be setting the bias to
- * 0 to get the robot to go straight and to some positive or negative value withing the same boundaries
- * [-1.0, 1.0] to get it to turn left or right.
- * 
- * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
- * the other.
- */
-PID_c heading_pid(0.7, 0.04, 3.0);
 
 /**
  * This will be nominal speed for the motors (encoder counts per second) when 
@@ -313,6 +328,14 @@ void talk_about_it(bool full_info) {
 //    Serial.print("Right wheel speed: ");
 //    Serial.println(getRightWheelSpeed());
 
+    Serial.print("Kinematics: ");
+    Serial.print(kinematics.getCurrentX_raw());
+    Serial.print(", ");
+    Serial.print(kinematics.getCurrentY_raw());
+    Serial.print(", ");
+    Serial.print(kinematics.getCurrentX_mm());
+    Serial.print(", ");
+    Serial.println(kinematics.getCurrentY_mm());
 
     /**
      * For charting:.

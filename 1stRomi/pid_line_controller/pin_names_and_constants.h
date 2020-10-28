@@ -32,6 +32,7 @@
 #define MOTOR_PID_UPDATE_TIME 10 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
 #define HEADING_PID_UPDATE_TIME 25 //# update time in ms for PID controller.
+#define KINEMATICS_UPDATE_TIME 25 //# update time in ms for kinematics data.
 
 /**
  * Encoder pins
@@ -40,7 +41,24 @@
 #define RIGHT_ENCODER_PHASE_B 23
 #define LEFT_ENCODER_XOR 8
 #define USECONDS_IN_1_SECOND 1000000
+
+/**
+ * Kinematics
+ */
 #define PULSES_PER_METER 1541 //# how many encoder pulses are in a meter
+#define PULSES_PER_REV 360 //# how many encoder pulses are in a full revolution of the wheel.
+#define WHEEL_DIAMETER_MM 70 //# Wheel diameter is 70mm as per spec: https://www.pololu.com/product/1428
+#define WHEEL_CIRCUMFERENCE WHEEL_DIAMETER_MM * PI //# wheel circumference
+#define MM_PER_PULSE WHEEL_CIRCUMFERENCE / PULSES_PER_REV //# how many mm of distance does 1 pulse mean.
+
+/**
+ * Converts encoder counts to mm. This is going to assume that one full revolution of a wheel returns 360
+ * encoder counts (and not 1440 as stated in Romi documentation: https://www.pololu.com/product/3542).
+ * I don't yet know why I get 360 counts instead of 1440 - probably misconfiguration of the pin change
+ * interrupt that the encoder relies on. Maybe I'll try to fix it at some point, but for now 360 will have
+ * to be good enough.
+ */
+#define encoderCountsToMM(pulses_to_convert) (MM_PER_PULSE * pulses_to_convert) //# conversion from pulses to mm.
 
 /**
  * LED
