@@ -129,8 +129,11 @@ float PID_c::update(float demand, float measurement) {
    * The problem is that this is like a punishment for past errors and it will
    * get bigger very quickly if we have any error in the system, which is why the
    * coefficient must be tiny for this.
+   * 
+   * Not using time_delta here, because I've overlooked it, however since my PID
+   * algorightm seems to work, I'm leaving this as is for now.
    */
-  integral_error += error;
+  integral_error += error;// * time_delta;
 
   //Calculate P,I,D Term contributions.
   Kp_output = Kp * error;

@@ -45,12 +45,19 @@
 /**
  * Kinematics
  */
-#define PULSES_PER_METER 1541 //# how many encoder pulses are in a meter
-#define PULSES_PER_REV 360 //# how many encoder pulses are in a full revolution of the wheel.
-#define WHEEL_DIAMETER_MM 70 //# Wheel diameter is 70mm as per spec: https://www.pololu.com/product/1428
-#define WHEEL_CIRCUMFERENCE WHEEL_DIAMETER_MM * PI //# wheel circumference
+#define PULSES_PER_METER 1541   //# how many encoder pulses are in a meter
+#define PULSES_PER_REV 360.0    //# how many encoder pulses are in a full revolution of the wheel.
+#define WHEEL_DIAMETER_MM 70.0  //# Wheel diameter is 70mm as per spec: https://www.pololu.com/product/1428
+#define WHEEL_CIRCUMFERENCE WHEEL_DIAMETER_MM * PI        //# wheel circumference
 #define MM_PER_PULSE WHEEL_CIRCUMFERENCE / PULSES_PER_REV //# how many mm of distance does 1 pulse mean.
-#define WHEEL_SEPARATION 149 //# Romi wheels are separated by 149 mm according to: https://www.pololu.com/docs/0J68/6
+
+#define CHASSIS_WIDTH 149.0    //# The width of chassis (including rims of the wheels) is 149 mm according to: https://www.pololu.com/docs/0J68/6
+#define WHEEL_WIDTH 6.6        //# Width of the wheel is 6.6mm according to https://www.pololu.com/file/0J1708/pololu-wheel-dimensions.pdf
+
+/**
+ * Romi wheels are then separated (middle of the wheel to middle of the wheel) by this distance
+ */
+#define WHEEL_SEPARATION (CHASSIS_WIDTH - WHEEL_WIDTH)
 
 /**
  * LED

@@ -48,9 +48,9 @@ class kinematics_c {
     /**
      * Current co-ordinates.
      */
-    long current_x = 0;
-    long current_y = 0;
-    double current_theta = 0;
+    float current_x = 0.0;
+    float current_y = 0.0;
+    float current_theta = 0.0;
 
     /**
      * Previous pulse counts of the encoders
@@ -58,7 +58,7 @@ class kinematics_c {
      */
     long prev_pulses_right = 0;
     long prev_pulses_left = 0;
-    double previous_theta = 0;
+    float previous_theta = 0.0;
 
     /**
      * Current pulse counts of the encoders.
@@ -75,16 +75,16 @@ class kinematics_c {
      * than 0. If that happens, this will take away the additional 
      * value and reduce it to a value between 0 and 2 * pi.
      */
-    double truncate_angle(double angle) {
-      while (angle > 2 * PI) {
-        angle -= 2 * PI;
+    float truncate_angle(float* angle) {
+      while (*angle > 2 * PI) {
+        *angle -= (2 * PI);
       }
       
       while (angle < 0) {
-        angle += 2 * PI;
+        *angle += (2 * PI);
       }
 
-      return angle;
+      return *angle;
     }
 }; // End of class definition.
 
@@ -106,12 +106,28 @@ void kinematics_c::update() {
    */
   cur_distance_travelled_left_wheel = cur_pulses_left - prev_pulses_left;
   cur_distance_travelled_right_wheel = cur_pulses_right - prev_pulses_right;
-  current_theta = previous_theta + encoderCountsToMM(cur_distance_travelled_left_wheel - cur_distance_travelled_right_wheel) / WHEEL_SEPARATION;
+  
+  current_theta = previous_theta + encoderCountsToMM(float(cur_distance_travelled_left_wheel - cur_distance_travelled_right_wheel)) / WHEEL_SEPARATION;
+
+//  Serial.print("current_theta: ");
+//  Serial.println(current_theta);
+//  Serial.print("previous_theta: ");
+//  Serial.println(previous_theta);
+//  Serial.print("cur_distance_travelled_left_wheel: ");
+//  Serial.println(cur_distance_travelled_left_wheel);
+//  Serial.print("cur_distance_travelled_right_wheel: ");
+//  Serial.println(cur_distance_travelled_right_wheel);
+//  Serial.print("WHEEL_SEPARATION: ");
+//  Serial.println(WHEEL_SEPARATION);
+//  Serial.print("encoderCountsToMM: ");
+//  Serial.println(encoderCountsToMM(float(cur_distance_travelled_left_wheel - cur_distance_travelled_right_wheel)));
+//  Serial.print("truncate_angle: ");
+  //Serial.println(truncate_angle(&current_theta));
 
   /**
    * Making sure that we don't get more than the full circle of radians or less than 0.
    */
-  current_theta = truncate_angle(current_theta);
+  truncate_angle(&current_theta);
   
   cur_distance_travelled = ((cur_distance_travelled_left_wheel + cur_distance_travelled_right_wheel) / 2);
   
@@ -121,8 +137,8 @@ void kinematics_c::update() {
    * So that's how we'll be updating our current coordinates then.
    * For now we don't yet have Theta.
    */
-  current_y = current_y + cur_distance_travelled * sin(current_theta - previous_theta);
-  current_x = current_x + cur_distance_travelled * cos(current_theta - previous_theta);
+  current_y = current_y + cur_distance_travelled * sin(previous_theta);
+  current_x = current_x + cur_distance_travelled * cos(previous_theta);
 
   prev_pulses_right = cur_pulses_right;
   prev_pulses_left = cur_pulses_left;
