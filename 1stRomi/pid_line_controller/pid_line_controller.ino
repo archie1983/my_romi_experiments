@@ -335,7 +335,9 @@ void talk_about_it(bool full_info) {
     Serial.print(", ");
     Serial.print(kinematics.getCurrentX_mm());
     Serial.print(", ");
-    Serial.println(kinematics.getCurrentY_mm());
+    Serial.print(kinematics.getCurrentY_mm());
+    Serial.print(", ");
+    Serial.println(kinematics.getCurrentHeading());
 
     /**
      * For charting:.
