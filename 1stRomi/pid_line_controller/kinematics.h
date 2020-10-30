@@ -12,6 +12,10 @@
  * to be good enough.
  */
 #define encoderCountsToMM(pulses_to_convert) (MM_PER_PULSE * pulses_to_convert) //# conversion from pulses to mm.
+/**
+ * Converts mm to encoder counts. Same assumptions as for encoderCountsToMM.
+ */
+#define mmToEncoderCounts(mm_to_convert) (mm_to_convert / MM_PER_PULSE) //# conversion from pulses to mm.
 
 class kinematics_c {
   public:
@@ -42,6 +46,19 @@ class kinematics_c {
 
     double getCurrentHeading() {
       return current_theta;
+    }
+
+    /**
+     * Returns the required number of encoder counts for the right wheel
+     * that we need for a rotation of the given angle. The angle is given
+     * in radians and the function returns encoder count for the LEFT wheel.
+     * The amount for the RIGHT wheel is the same as the amount for the LEFT
+     * wheel, but with inverted sign. So for example if this function returns
+     * 100, then we're expected to turn the LEFT wheel by 100 counts and the
+     * left wheel by -100.
+     */
+    int getCountsForRotationByAngle(float angle) {
+      return mmToEncoderCounts(angle * WHEEL_SEPARATION) / 2;
     }
 
   private:

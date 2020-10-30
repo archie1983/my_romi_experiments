@@ -207,10 +207,18 @@ void act_on_commands() {
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
-    if (in_cmd.indexOf("f12") > -1) { //# PID experiment
-      Serial.println("F12");
-      Motor::getRightMotor()->moveByCounts(100, 200);
-      //Motor::getRightMotor()->moveByCounts(1000, 12);
+    if (in_cmd.indexOf("t1") > -1) { //# turning experiment
+      Serial.println("Turning pi/2");
+      turnByAngle(PI / 2);
+    } else if (in_cmd.indexOf("t2") > -1) { //# turning experiment
+      Serial.println("Turning pi");
+      turnByAngle(PI);
+    } else if (in_cmd.indexOf("t3") > -1) { //# turning experiment
+      Serial.println("Turning -pi/2");
+      turnByAngle(-PI / 2);
+    } else if (in_cmd.indexOf("t4") > -1) { //# turning experiment
+      Serial.println("Turning -pi");
+      turnByAngle(-PI);
     } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment moving forward
       Serial.println("PID experiment forw");
       //Motor::getRightMotor()->goAtGivenSpeed_PID(100);
@@ -391,5 +399,23 @@ long getLeftWheelSpeed() {
     return 0;
   } else {
     return Encoder::getLeftEncoder()->getWheelSpeed();
+  }
+}
+
+byte turning_power = 100;
+/**
+ * Commands the wheels of the robot to turn in such a way
+ * that the whole robot turns by the given angle in radians.
+ */
+void turnByAngle(float angle) {
+  int left_counts = kinematics.getCountsForRotationByAngle(angle);
+  unsigned int counts = abs(left_counts);
+
+  if (left_counts > 0) {
+    Motor::getLeftMotor()->moveByCounts(counts, turning_power);
+    Motor::getRightMotor()->moveByCounts(counts, -turning_power);
+  } else {
+    Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
+    Motor::getRightMotor()->moveByCounts(counts, turning_power);    
   }
 }
