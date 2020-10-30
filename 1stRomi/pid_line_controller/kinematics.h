@@ -97,7 +97,7 @@ class kinematics_c {
         *angle -= (2 * PI);
       }
       
-      while (angle < 0) {
+      while (*angle < 0) {
         *angle += (2 * PI);
       }
 
