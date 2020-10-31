@@ -49,8 +49,8 @@ class kinematics_c {
     }
 
     /**
-     * Returns the required number of encoder counts for the right wheel
-     * that we need for a rotation of the given angle. The angle is given
+     * Returns the required number of encoder counts for the LEFT wheel
+     * that we need for a rotation BY the given angle. The angle is given
      * in radians and the function returns encoder count for the LEFT wheel.
      * The amount for the RIGHT wheel is the same as the amount for the LEFT
      * wheel, but with inverted sign. So for example if this function returns
@@ -88,16 +88,16 @@ class kinematics_c {
 
     /**
      * The theta angle that we'll be getting, it will be in radians
-     * and it may come out as a number greater than 2 * pi or smaller 
-     * than 0. If that happens, this will take away the additional 
-     * value and reduce it to a value between 0 and 2 * pi.
+     * and it may come out as a number greater than Pi or smaller 
+     * than -Pi. If that happens, this will take away the additional 
+     * value and reduce it to a value between -Pi and Pi.
      */
     float truncate_angle(float* angle) {
-      while (*angle > 2 * PI) {
+      while (*angle > PI) {
         *angle -= (2 * PI);
       }
-      
-      while (*angle < 0) {
+
+      while (*angle < -PI) {
         *angle += (2 * PI);
       }
 

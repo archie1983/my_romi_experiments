@@ -207,18 +207,42 @@ void act_on_commands() {
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
-    if (in_cmd.indexOf("t1") > -1) { //# turning experiment
-      Serial.println("Turning pi/2");
+    if (in_cmd.indexOf("ta1") > -1) { //# turning experiment
+      Serial.println("Turning to pi/2");
+      turnToAngle(PI / 2);
+    } else if (in_cmd.indexOf("ta2") > -1) { //# turning experiment
+      Serial.println("Turning to pi");
+      turnToAngle(PI);
+    } else if (in_cmd.indexOf("ta3") > -1) { //# turning experiment
+      Serial.println("Turning to -pi/2");
+      turnToAngle(-PI / 2);
+    } else if (in_cmd.indexOf("ta4") > -1) { //# turning experiment
+      Serial.println("Turning to -pi");
+      turnToAngle(-PI);
+    } else if (in_cmd.indexOf("ta5") > -1) { //# turning experiment
+      Serial.println("Turning to 0");
+      turnToAngle(0);
+    } else if (in_cmd.indexOf("ta6") > -1) { //# turning experiment
+      Serial.println("Turning to 2*pi");
+      turnToAngle(2 * PI);
+    } else if (in_cmd.indexOf("t1") > -1) { //# turning experiment
+      Serial.println("Turning by pi/2");
       turnByAngle(PI / 2);
     } else if (in_cmd.indexOf("t2") > -1) { //# turning experiment
-      Serial.println("Turning pi");
+      Serial.println("Turning by pi");
       turnByAngle(PI);
     } else if (in_cmd.indexOf("t3") > -1) { //# turning experiment
-      Serial.println("Turning -pi/2");
+      Serial.println("Turning by -pi/2");
       turnByAngle(-PI / 2);
     } else if (in_cmd.indexOf("t4") > -1) { //# turning experiment
-      Serial.println("Turning -pi");
+      Serial.println("Turning by -pi");
       turnByAngle(-PI);
+    } else if (in_cmd.indexOf("t5") > -1) { //# turning experiment
+      Serial.println("Turning by 0");
+      turnByAngle(0);
+    } else if (in_cmd.indexOf("t6") > -1) { //# turning experiment
+      Serial.println("Turning by 2*pi");
+      turnByAngle(2 * PI);
     } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment moving forward
       Serial.println("PID experiment forw");
       //Motor::getRightMotor()->goAtGivenSpeed_PID(100);
@@ -405,7 +429,10 @@ long getLeftWheelSpeed() {
 byte turning_power = 100;
 /**
  * Commands the wheels of the robot to turn in such a way
- * that the whole robot turns by the given angle in radians.
+ * that the whole robot turns BY the given angle in radians.
+ * 
+ * Positive agrument - turns clock wise
+ * Negative argument - turns counter clock wise.
  */
 void turnByAngle(float angle) {
   int left_counts = kinematics.getCountsForRotationByAngle(angle);
@@ -418,4 +445,12 @@ void turnByAngle(float angle) {
     Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
     Motor::getRightMotor()->moveByCounts(counts, turning_power);    
   }
+}
+
+/**
+ * Commands the wheels of the robot to turn in such a way
+ * that the whole robot turns TO the given angle in radians.
+ */
+void turnToAngle(float angle) {
+  turnByAngle(angle - kinematics.getCurrentHeading());
 }

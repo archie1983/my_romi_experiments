@@ -98,18 +98,22 @@ class Motor : public ThresholdCallback {
      * Runs the motor forward for for the specified amount of encoder counts at 35 PWM power
      */
     void goForwardByCounts(unsigned int counts) {
-      turnMotor(35);
-      setThreshold(counts);
-      encoder->setThreshold(this);
+      if (counts > 0) {
+        turnMotor(35);
+        setThreshold(counts);
+        encoder->setThreshold(this);
+      }
     }
 
     /**
      * Runs the motor backwards for for the specified amount of encoder counts at 35 PWM power
      */
     void goBackwardByCounts(unsigned int counts) {
-      turnMotor(-35);
-      setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
-      encoder->setThreshold(this);
+      if (counts > 0) {
+        turnMotor(-35);
+        setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
+        encoder->setThreshold(this);
+      }
     }
 
     /**
@@ -128,18 +132,22 @@ class Motor : public ThresholdCallback {
      * Runs the motor forward for for the specified amount of encoder counts at the specified PWM power
      */
     void goForwardByCounts(unsigned int counts, byte power) {
-      turnMotor(power);
-      setThreshold(counts);
-      encoder->setThreshold(this);
+      if (counts > 0) {
+        turnMotor(power);
+        setThreshold(counts);
+        encoder->setThreshold(this);
+      }
     }
 
     /**
      * Runs the motor backwards for for the specified amount of encoder counts at the specified PWM power
      */
     void goBackwardByCounts(unsigned int counts, byte power) {
-      turnMotor(-power);
-      setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
-      encoder->setThreshold(this);
+      if (counts > 0) {
+        turnMotor(-power);
+        setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
+        encoder->setThreshold(this);
+      }
     }
 
     /**
