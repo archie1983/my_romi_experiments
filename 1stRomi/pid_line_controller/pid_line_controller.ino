@@ -454,3 +454,7 @@ void turnByAngle(float angle) {
 void turnToAngle(float angle) {
   turnByAngle(angle - kinematics.getCurrentHeading());
 }
+
+void goHome() {
+  turnToAngle(kinematics.getAngleToGoHome());
+}

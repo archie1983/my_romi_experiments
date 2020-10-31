@@ -61,6 +61,18 @@ class kinematics_c {
       return mmToEncoderCounts(angle * WHEEL_SEPARATION) / 2;
     }
 
+    /**
+     * Returns angle towards home (0,0).
+     */
+    float getAngleToGoHome() {
+      long y_home = 0;
+      long x_home = 0;
+      long y_to_home = y_home - current_y;
+      long x_to_home = x_home - current_x;
+
+      return atan2(y_to_home / x_to_home);
+    }
+
   private:
     /**
      * Current co-ordinates.
