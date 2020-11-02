@@ -3,6 +3,7 @@
 
 #include "pin_names_and_constants.h"
 #include "encoder.h"
+#include "motor.h"
 
 /**
  * Converts encoder counts to mm. This is going to assume that one full revolution of a wheel returns 360
@@ -17,7 +18,7 @@
  */
 #define mmToEncoderCounts(mm_to_convert) (mm_to_convert / MM_PER_PULSE) //# conversion from pulses to mm.
 
-class kinematics_c {
+class Kinematics {
   public:
 
     // What variables do you need?
@@ -25,7 +26,6 @@ class kinematics_c {
     // ...
 
     // Function Prototypes
-    kinematics_c();   // constructor 
     void update();    // update kinematics
 
     long getCurrentX_raw() {
@@ -70,7 +70,60 @@ class kinematics_c {
       long y_to_home = y_home - current_y;
       long x_to_home = x_home - current_x;
 
-      return atan2(y_to_home / x_to_home);
+      return atan2(y_to_home, x_to_home) - PI;
+    }
+
+    byte turning_power = 100;
+    /**
+     * Commands the wheels of the robot to turn in such a way
+     * that the whole robot turns BY the given angle in radians.
+     * 
+     * Positive agrument - turns clock wise
+     * Negative argument - turns counter clock wise.
+     */
+    void turnByAngle(float angle) {
+      int left_counts = getCountsForRotationByAngle(angle);
+      unsigned int counts = abs(left_counts);
+    
+      if (left_counts > 0) {
+        Motor::getLeftMotor()->moveByCounts(counts, turning_power);
+        Motor::getRightMotor()->moveByCounts(counts, -turning_power);
+      } else {
+        Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
+        Motor::getRightMotor()->moveByCounts(counts, turning_power);    
+      }
+    }
+
+    /**
+     * Commands the wheels of the robot to turn in such a way
+     * that the whole robot turns TO the given angle in radians.
+     */
+    void turnToAngle(float angle) {
+      turnByAngle(angle - getCurrentHeading());
+    }
+    
+    /**
+     * Turns to the angle to go home.
+     */
+    void turnToHomeHeading() {
+      turnToAngle(getAngleToGoHome());
+    }
+
+    /**
+     * Runs the motors for the required number of counts to get back
+     * home provided that we're already orientated to home. turnToHomeHeading()
+     * has to be called and it of course needs to finish before this function.
+     */
+    void walkDistanceToHome() {
+      Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
+      Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
+    }
+
+    /**
+     * Static accessor for our kinematics object.
+     */
+    static Kinematics* getKinematics() {
+      return kinematics;
     }
 
   private:
@@ -99,6 +152,11 @@ class kinematics_c {
     long cur_distance_travelled = 0;
 
     /**
+     * A static reference to itself, which we'll return via a static getter.
+     */
+    static Kinematics* kinematics;
+
+    /**
      * The theta angle that we'll be getting, it will be in radians
      * and it may come out as a number greater than Pi or smaller 
      * than -Pi. If that happens, this will take away the additional 
@@ -115,16 +173,20 @@ class kinematics_c {
 
       return *angle;
     }
+
+    /**
+     * Private constructor, because we'll access this class via a static getter.
+     */
+    Kinematics() {
+      
+    }
 }; // End of class definition.
 
-
-kinematics_c::kinematics_c() {
-  // ...  
-} // end of constructor.
+Kinematics* Kinematics::kinematics = new Kinematics();
 
 // Routine to execute the update to
 // kinematics 
-void kinematics_c::update() {
+void Kinematics::update() {
   
   cur_pulses_right = Encoder::getRightEncoder()->getPulseCount();
   cur_pulses_left = Encoder::getLeftEncoder()->getPulseCount();

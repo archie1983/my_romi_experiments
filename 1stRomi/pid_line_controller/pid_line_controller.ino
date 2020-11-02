@@ -3,6 +3,7 @@
 #include "motor.h"
 #include "pid.h"
 #include "kinematics.h"
+#include "state_machine.h"
 
 void setup() {
   // Start Serial monitor and print "reset"
@@ -23,6 +24,8 @@ void setup() {
    * in the setup section of the main code.
    */
   LineSensor::reInitTimer(LINE_SENSOR_UPDATE_FREQUENCY);
+
+  StateMachine::getStateMachine()->setState(StateMachine::LineFollowingStates::IDLING);
 }
 
 /**
@@ -35,11 +38,6 @@ void setup() {
  * the other.
  */
 PID_c heading_pid(0.7, 0.04, 3.0);
-
-/**
- * Kinematics data.
- */
-kinematics_c kinematics;
 
 /**
  * A flag of whether we want to follow the line or not.
@@ -88,7 +86,7 @@ void event_scheduler() {
    * Updating kinematics if it's time.
    */
   if (time_now - time_last_kinematics_update >= KINEMATICS_UPDATE_TIME){
-    kinematics.update();
+    Kinematics::getKinematics()->update();
     time_last_kinematics_update = time_now;
   }
 }
@@ -207,42 +205,46 @@ void act_on_commands() {
   //This line checks whether there is anything to read
   if ( Serial.available() ) {
     String in_cmd = Serial.readString();
-    if (in_cmd.indexOf("ta1") > -1) { //# turning experiment
+    
+    if (in_cmd.indexOf("gohome") > -1) { //# Going home
+      Serial.println("Going home");
+      goHome();
+    } else if (in_cmd.indexOf("ta1") > -1) { //# turning experiment
       Serial.println("Turning to pi/2");
-      turnToAngle(PI / 2);
+      Kinematics::getKinematics()->turnToAngle(PI / 2);
     } else if (in_cmd.indexOf("ta2") > -1) { //# turning experiment
       Serial.println("Turning to pi");
-      turnToAngle(PI);
+      Kinematics::getKinematics()->turnToAngle(PI);
     } else if (in_cmd.indexOf("ta3") > -1) { //# turning experiment
       Serial.println("Turning to -pi/2");
-      turnToAngle(-PI / 2);
+      Kinematics::getKinematics()->turnToAngle(-PI / 2);
     } else if (in_cmd.indexOf("ta4") > -1) { //# turning experiment
       Serial.println("Turning to -pi");
-      turnToAngle(-PI);
+      Kinematics::getKinematics()->turnToAngle(-PI);
     } else if (in_cmd.indexOf("ta5") > -1) { //# turning experiment
       Serial.println("Turning to 0");
-      turnToAngle(0);
+      Kinematics::getKinematics()->turnToAngle(0);
     } else if (in_cmd.indexOf("ta6") > -1) { //# turning experiment
       Serial.println("Turning to 2*pi");
-      turnToAngle(2 * PI);
+      Kinematics::getKinematics()->turnToAngle(2 * PI);
     } else if (in_cmd.indexOf("t1") > -1) { //# turning experiment
       Serial.println("Turning by pi/2");
-      turnByAngle(PI / 2);
+      Kinematics::getKinematics()->turnByAngle(PI / 2);
     } else if (in_cmd.indexOf("t2") > -1) { //# turning experiment
       Serial.println("Turning by pi");
-      turnByAngle(PI);
+      Kinematics::getKinematics()->turnByAngle(PI);
     } else if (in_cmd.indexOf("t3") > -1) { //# turning experiment
       Serial.println("Turning by -pi/2");
-      turnByAngle(-PI / 2);
+      Kinematics::getKinematics()->turnByAngle(-PI / 2);
     } else if (in_cmd.indexOf("t4") > -1) { //# turning experiment
       Serial.println("Turning by -pi");
-      turnByAngle(-PI);
+      Kinematics::getKinematics()->turnByAngle(-PI);
     } else if (in_cmd.indexOf("t5") > -1) { //# turning experiment
       Serial.println("Turning by 0");
-      turnByAngle(0);
+      Kinematics::getKinematics()->turnByAngle(0);
     } else if (in_cmd.indexOf("t6") > -1) { //# turning experiment
       Serial.println("Turning by 2*pi");
-      turnByAngle(2 * PI);
+      Kinematics::getKinematics()->turnByAngle(2 * PI);
     } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment moving forward
       Serial.println("PID experiment forw");
       //Motor::getRightMotor()->goAtGivenSpeed_PID(100);
@@ -361,15 +363,15 @@ void talk_about_it(bool full_info) {
 //    Serial.println(getRightWheelSpeed());
 
     Serial.print("Kinematics: ");
-    Serial.print(kinematics.getCurrentX_raw());
+    Serial.print(Kinematics::getKinematics()->getCurrentX_raw());
     Serial.print(", ");
-    Serial.print(kinematics.getCurrentY_raw());
+    Serial.print(Kinematics::getKinematics()->getCurrentY_raw());
     Serial.print(", ");
-    Serial.print(kinematics.getCurrentX_mm());
+    Serial.print(Kinematics::getKinematics()->getCurrentX_mm());
     Serial.print(", ");
-    Serial.print(kinematics.getCurrentY_mm());
+    Serial.print(Kinematics::getKinematics()->getCurrentY_mm());
     Serial.print(", ");
-    Serial.println(kinematics.getCurrentHeading());
+    Serial.println(Kinematics::getKinematics()->getCurrentHeading());
 
     /**
      * For charting:.
@@ -426,35 +428,15 @@ long getLeftWheelSpeed() {
   }
 }
 
-byte turning_power = 100;
 /**
- * Commands the wheels of the robot to turn in such a way
- * that the whole robot turns BY the given angle in radians.
- * 
- * Positive agrument - turns clock wise
- * Negative argument - turns counter clock wise.
+ * Starts the process of going home by intiating the state machine
+ * appropriately and starting with the turn. When turn is finished,
+ * the state machine will be advanced to the next state and next
+ * operation will be executed.
  */
-void turnByAngle(float angle) {
-  int left_counts = kinematics.getCountsForRotationByAngle(angle);
-  unsigned int counts = abs(left_counts);
-
-  if (left_counts > 0) {
-    Motor::getLeftMotor()->moveByCounts(counts, turning_power);
-    Motor::getRightMotor()->moveByCounts(counts, -turning_power);
-  } else {
-    Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
-    Motor::getRightMotor()->moveByCounts(counts, turning_power);    
-  }
-}
-
-/**
- * Commands the wheels of the robot to turn in such a way
- * that the whole robot turns TO the given angle in radians.
- */
-void turnToAngle(float angle) {
-  turnByAngle(angle - kinematics.getCurrentHeading());
-}
-
 void goHome() {
-  turnToAngle(kinematics.getAngleToGoHome());
+  /**
+   * First we'll make the turn and the rest will follow in the state machine.
+   */
+  StateMachine::getStateMachine()->setState(StateMachine::LineFollowingStates::TURNING_TO_GO_HOME);
 }

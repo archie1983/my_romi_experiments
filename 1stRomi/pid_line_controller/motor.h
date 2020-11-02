@@ -5,6 +5,7 @@
 #include "threshold_callback.h"
 #include "encoder.h"
 #include "pid.h"
+#include "kinematics.h"
 
 /**
  * This class will control motor movement.
@@ -177,6 +178,12 @@ class Motor : public ThresholdCallback {
      */
     void callBackFunction() {
       stopMotor();
+
+      /**
+       * After the motor has done its job, we want to notify our state machine so that it can
+       * advance.
+       */
+      Kinematics::getKinematics()->update();
     }
   private:
     /**
