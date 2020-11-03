@@ -23,21 +23,27 @@ void Encoder::incEncPulseCnt() {
 
   calculate_wheel_speed(1);
 
+//  Serial.print("INCrease Counter1 ");
+//  Serial.print((this->threshold_triggered_functionality == NULL));
+//  Serial.print(" ");
+//  Serial.print(this->threshold_triggered_functionality->isThresholdActive());
+//  Serial.print(" ADDR: ");
+//  Serial.println((long)this);
   /*
    * If we have a running threshold, then let's update its counter and act on it if it's
    * the time.
    */
-  if (threshold_triggered_functionality != NULL && threshold_triggered_functionality->isThresholdActive()) {
+  if (this->threshold_triggered_functionality != NULL && this->threshold_triggered_functionality->isThresholdActive()) {
     /*
      * Operate the threshold
      */
-    threshold_triggered_functionality->decreaseCounter();
+    this->threshold_triggered_functionality->decreaseCounter();
 
     /*
      * If the threshold has done its job and is no longer active, then let's remove it.
      */
-    if (!threshold_triggered_functionality->isThresholdActive()) {
-      threshold_triggered_functionality = NULL;
+    if (!this->threshold_triggered_functionality->isThresholdActive()) {
+      this->threshold_triggered_functionality = NULL;
     }
   }
 }
@@ -50,22 +56,27 @@ void Encoder::decEncPulseCnt() {
   encoder_pulse_cnt--;
 
   calculate_wheel_speed(-1);
-
+//  Serial.print("DECrease Counter1 ");
+//  Serial.print((threshold_triggered_functionality == NULL));
+//  Serial.print(" ");
+//  Serial.print(this->threshold_triggered_functionality->isThresholdActive());
+//  Serial.print(" ADDR: ");
+//  Serial.println((long)this);
   /*
    * If we have a running threshold, then let's update its counter and act on it if it's
    * the time.
    */
-  if (threshold_triggered_functionality != NULL && threshold_triggered_functionality->isThresholdActive()) {
+  if (this->threshold_triggered_functionality != NULL && this->threshold_triggered_functionality->isThresholdActive()) {
     /*
      * Operate the threshold
      */
-    threshold_triggered_functionality->increaseCounter();
+    this->threshold_triggered_functionality->increaseCounter();
 
     /*
      * If the threshold has done its job and is no longer active, then let's remove it.
      */
-    if (!threshold_triggered_functionality->isThresholdActive()) {
-      threshold_triggered_functionality = NULL;
+    if (!this->threshold_triggered_functionality->isThresholdActive()) {
+      this->threshold_triggered_functionality = NULL;
     }
   }
 }
@@ -97,8 +108,14 @@ long Encoder::getWheelSpeed() {
  * Sets a threshold of the given counts and the function that needs to be run
  * after the threshold has been reached.
  */
-void Encoder::setThreshold(ThresholdCallback *threshold_triggered_functionality) {
-  this->threshold_triggered_functionality = threshold_triggered_functionality;
+void Encoder::setThreshold(ThresholdCallback* in_threshold_triggered_functionality) {
+//  Serial.print("SETTING ENC THR: ");
+//  Serial.print((in_threshold_triggered_functionality == NULL));
+  threshold_triggered_functionality = in_threshold_triggered_functionality;
+//  Serial.print(" IS NULL: ");
+//  Serial.print((this->threshold_triggered_functionality == NULL));
+//  Serial.print(" ADDR: ");
+//  Serial.println((long)this);
 }
 
 /**

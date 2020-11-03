@@ -53,7 +53,7 @@ class Encoder {
      * Sets a threshold of the given counts and the function that needs to be run
      * after the threshold has been reached.
      */
-    void setThreshold(ThresholdCallback *threshold_triggered_functionality);
+    void setThreshold(ThresholdCallback* in_threshold_triggered_functionality);
     
   private:
     /**
@@ -101,7 +101,7 @@ class Encoder {
     static Encoder* rightEncoder;
 
     /**
-     * A pointer to the motro control so that we can do something with the motor when the threshold has been reached.
+     * A pointer to the motor control so that we can do something with the motor when the threshold has been reached.
      */
     ThresholdCallback *threshold_triggered_functionality = NULL;
 };

@@ -1,5 +1,5 @@
 #include "motor.h"
-#include "kinematics.h"
+#include "state_machine.h"
 #include "ir_line_sensor.h"
 #include "pin_names_and_constants.h"
 
@@ -93,7 +93,7 @@ void Motor::goForwardByCounts(unsigned int counts) {
   if (counts > 0) {
     turnMotor(35);
     setThreshold(counts);
-    encoder->setThreshold(this);
+    getEncoder()->setThreshold(this);
   }
 }
 
@@ -104,7 +104,7 @@ void Motor::goBackwardByCounts(unsigned int counts) {
   if (counts > 0) {
     turnMotor(-35);
     setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
-    encoder->setThreshold(this);
+    getEncoder()->setThreshold(this);
   }
 }
 
@@ -127,7 +127,12 @@ void Motor::goForwardByCounts(unsigned int counts, byte power) {
   if (counts > 0) {
     turnMotor(power);
     setThreshold(counts);
-    encoder->setThreshold(this);
+    getEncoder()->setThreshold(this);
+    
+//    Serial.print("SETTING THR F: ");
+//    Serial.print(counts);
+//    Serial.print(" ADDR: ");
+//    Serial.println((long)getEncoder());
   }
 }
 
@@ -138,7 +143,12 @@ void Motor::goBackwardByCounts(unsigned int counts, byte power) {
   if (counts > 0) {
     turnMotor(-power);
     setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
-    encoder->setThreshold(this);
+    getEncoder()->setThreshold(this);
+
+//    Serial.print("SETTING THR B: ");
+//    Serial.print(counts);
+//    Serial.print(" ADDR: ");
+//    Serial.println((long)getEncoder());
   }
 }
 
@@ -146,7 +156,7 @@ void Motor::goBackwardByCounts(unsigned int counts, byte power) {
  * Stops motor and cancels any previous threshold that was sent to the encoder.
  */
 void Motor::stopMotorAndCancelPreviousInstruction() {
-  this->clearThreshold();
+  clearThreshold();
   stopMotor();
 }
 
@@ -168,13 +178,14 @@ Motor* Motor::getLeftMotor() {
  * Callback function overridden from ThresholdCallback class that's been inherited.
  */
 void Motor::callBackFunction() {
+//  Serial.println("CALLBACK###############");
   stopMotor();
 
   /**
    * After the motor has done its job, we want to notify our state machine so that it can
    * advance.
    */
-  Kinematics::getKinematics()->update();
+  StateMachine::getStateMachine()->update();
 }
 
 /**
@@ -182,14 +193,27 @@ void Motor::callBackFunction() {
  * It doesn't have to be public, because we'll only create instances of motor
  * within motor.h and those instances will be available through a static function.
  */
-Motor::Motor(byte pinDirection, byte pinRun, Encoder* encoder, PID_c* pid_controller) {
+Motor::Motor(byte pinDirection, byte pinRun, byte whichMotor, PID_c* pid_controller) {
   this->pinDirection = pinDirection;
   this->pinRun = pinRun;
-  this->encoder = encoder;
+  this->whichMotor = whichMotor;
   this->pid_controller = pid_controller;
 
   pinMode(pinDirection, OUTPUT);
   pinMode(pinRun, OUTPUT);
+}
+
+/**
+ * Returns a pointer to the encoder that belongs to this motor.
+ */
+Encoder* Motor::getEncoder() {
+  if (whichMotor == RIGHT_MOTOR) {
+    return Encoder::getRightEncoder();
+  } else if (whichMotor == LEFT_MOTOR) {
+    return Encoder::getLeftEncoder();
+  } else {
+    return NULL;
+  }
 }
 
 /**
@@ -281,5 +305,5 @@ void Motor::stopMotor() {
  * 
  * Kp = 0.2 Kd = 3.0 and Ki = 0.04 look like good candidate- very little oscillation and good adjustments.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, Encoder::getRightEncoder(), new PID_c(0.2, 0.04, 3.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, Encoder::getLeftEncoder(), new PID_c(0.5, 0.08, 4.0));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, RIGHT_MOTOR, new PID_c(0.2, 0.04, 3.0));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, LEFT_MOTOR, new PID_c(0.5, 0.08, 4.0));

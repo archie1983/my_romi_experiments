@@ -1,7 +1,7 @@
 #ifndef _STATE_MACHINE_
 #define _STATE_MACHINE_
 
-#include "kinematics.h"
+#include <Arduino.h>
 
 /**
  * This is a class that provides a state machine and a state transfer function to move from
@@ -29,51 +29,15 @@ class StateMachine {
     /**
      * Update function for the states with simple transition without parameters. Unconditional transition.
      */
-    void update() {
-      switch (currentState) {
-        case IDLING:
-          setState(LOOKING_FOR_LINE_MOVING_FORWARD);
-          break;
-        case LINE_LOST:
-          setState(LOOKING_FOR_LINE_TURNING_LEFT);
-          break;
-        case LOOKING_FOR_LINE_TURNING_LEFT:
-          setState(LOOKING_FOR_LINE_TURNING_RIGHT);
-          break;
-        case LOOKING_FOR_LINE_TURNING_RIGHT:
-          setState(LOOKING_FOR_LINE_MOVING_FORWARD);
-          break;
-        case TURNING_TO_GO_HOME:
-          setState(TURNING_TO_GO_HOME_MOTOR1_DONE);
-          break;
-        case TURNING_TO_GO_HOME_MOTOR1_DONE:
-          setState(MOVING_TO_GO_HOME);
-          break;
-        case MOVING_TO_GO_HOME:
-          setState(HOME_REACHED);
-          break;
-      }
-    }
+    void update();
 
     /**
      * Sets the current state to the given one and executes a function
      * related to that state.
      */
-    void setState(LineFollowingStates state) {
-      currentState = state;
-      switch (state) {
-        case TURNING_TO_GO_HOME:
-          Kinematics::getKinematics()->turnToHomeHeading();
-          break;
-        case MOVING_TO_GO_HOME:
-          Kinematics::getKinematics()->walkDistanceToHome();
-          break;
-      }
-    }
+    void setState(LineFollowingStates state);
 
-    static StateMachine* getStateMachine() {
-      return stateMachine;
-    }
+    static StateMachine* getStateMachine();
 
   private:
     LineFollowingStates currentState = LineFollowingStates::IDLING;
@@ -83,10 +47,7 @@ class StateMachine {
     /**
      * Private constructore, because we only want one sate machine - a singleton.
      */
-    StateMachine(LineFollowingStates initialState) {
-      currentState = initialState;
-    }
+    StateMachine(LineFollowingStates initialState);
 };
 
-StateMachine* StateMachine::stateMachine = new StateMachine(StateMachine::LineFollowingStates::IDLING);
 #endif

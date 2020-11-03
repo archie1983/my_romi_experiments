@@ -2,6 +2,7 @@
 
 #define _THRESHOLD_CALLBACK_
 
+#include <Arduino.h>
 /**
  * This will be a base class for functionality that allows passing function pointer
  * to a different class so that it can call it back.
@@ -16,50 +17,27 @@ class ThresholdCallback {
     /**
      * Decreases counter until it reaches 0. Then we trigger and stop.
      */
-    void decreaseCounter() {
-      if (thresholdOn) {
-        thresholdCount--;
-        if (thresholdCount == 0) {
-          thresholdReached();
-        }
-      }
-    }
+    void decreaseCounter();
 
     /**
      * Increases counter until it reaches 0. Then we trigger and stop.
      */
-    void increaseCounter() {
-      if (thresholdOn) {
-        //Serial.println(thresholdCount);
-        thresholdCount++;
-        if (thresholdCount == 0) {
-          thresholdReached();
-        }
-      }
-    }
+    void increaseCounter();
 
     /**
      * Sets the threshold.
      */
-    void setThreshold(long count) {
-      thresholdCount = count;
-      thresholdOn = true;
-    }
+    void setThreshold(long count);
 
     /**
      * Clears the current threshold.
      */
-    void clearThreshold() {
-      thresholdOn = false;
-      thresholdCount = 0;
-    }
+    void clearThreshold();
 
     /**
      * Returns a flag of whether this threshold is active or not
      */
-    bool isThresholdActive() {
-      return thresholdOn;
-    }
+    bool isThresholdActive();
   private:
     /**
      * A threshold count. This will be set by setThreshold function. ISR will count this down and when
@@ -78,10 +56,7 @@ class ThresholdCallback {
      * Function to call (typically by the incEncPulseCnt or decEncPulseCnt functions which in turn should 
      * typically be called by ISR) when the set threshold has been reached.
      */
-    void thresholdReached() {
-      clearThreshold();
-      callBackFunction();
-    }
+    void thresholdReached();
 };
 
 #endif

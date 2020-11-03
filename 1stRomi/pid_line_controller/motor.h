@@ -7,6 +7,15 @@
 #include "pid.h"
 
 /**
+ * We'll need to differentiate our motors so that we know which encoder to use.
+ * For that we'll use these defines, which we'll pass in the constructor and
+ * save in some variable and later we'll look up the correct encoder by the 
+ * value of that variable.
+ */
+#define RIGHT_MOTOR 1
+#define LEFT_MOTOR 2
+
+/**
  * This class will control motor movement.
  */
 class Motor : public ThresholdCallback {
@@ -118,26 +127,31 @@ class Motor : public ThresholdCallback {
     byte pinRun;
 
     /**
-     * Encoder for this motor.
-     */
-    Encoder* encoder;
-
-    /**
      * PID controller for this motor
      */
     PID_c* pid_controller;
+
+    /**
+     * A differentiator for left and right motors.
+     */
+    byte whichMotor = 0;
+
+    /**
+     * Last requested motor speed when running with PID
+     */
+    int last_requested_motor_speed = 0;
   
     /**
      * Constructor with a set of pins- directions and run control for the motor.
      * It doesn't have to be public, because we'll only create instances of motor
      * within motor.h and those instances will be available through a static function.
      */
-    Motor(byte pinDirection, byte pinRun, Encoder* encoder, PID_c* pid_controller);
+    Motor(byte pinDirection, byte pinRun, byte whichMotor, PID_c* pid_controller);
 
     /**
-     * Last requested motor speed when running with PID
+     * Returns a pointer to the encoder that belongs to this motor.
      */
-    int last_requested_motor_speed = 0;
+    Encoder* getEncoder();
     
     /**
      * Moves the motor to go forward or backward with a given PWM.
