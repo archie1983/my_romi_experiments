@@ -129,8 +129,8 @@ void Motor::goForwardByCounts(unsigned int counts, byte power) {
     setThreshold(counts);
     getEncoder()->setThreshold(this);
     
-//    Serial.print("SETTING THR F: ");
-//    Serial.print(counts);
+    Serial.print("SETTING THR F: ");
+    Serial.print(counts);
 //    Serial.print(" ADDR: ");
 //    Serial.println((long)getEncoder());
   }
@@ -145,8 +145,8 @@ void Motor::goBackwardByCounts(unsigned int counts, byte power) {
     setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
     getEncoder()->setThreshold(this);
 
-//    Serial.print("SETTING THR B: ");
-//    Serial.print(counts);
+    Serial.print("SETTING THR B: ");
+    Serial.print(counts);
 //    Serial.print(" ADDR: ");
 //    Serial.println((long)getEncoder());
   }
@@ -178,7 +178,7 @@ Motor* Motor::getLeftMotor() {
  * Callback function overridden from ThresholdCallback class that's been inherited.
  */
 void Motor::callBackFunction() {
-//  Serial.println("CALLBACK###############");
+  Serial.println("CALLBACK###############");
   stopMotor();
 
   /**

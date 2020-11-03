@@ -45,7 +45,7 @@ float Kinematics::getAngleToGoHome() {
   long y_to_home = y_home - current_y;
   long x_to_home = x_home - current_x;
 
-  return atan2(y_to_home, x_to_home) - PI;
+  return atan2(y_to_home, x_to_home);// - PI;
 }
 
 /**

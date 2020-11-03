@@ -37,13 +37,13 @@ void Encoder::incEncPulseCnt() {
     /*
      * Operate the threshold
      */
-    this->threshold_triggered_functionality->decreaseCounter();
-
-    /*
-     * If the threshold has done its job and is no longer active, then let's remove it.
-     */
-    if (!this->threshold_triggered_functionality->isThresholdActive()) {
+    if (this->threshold_triggered_functionality->decreaseCounter()) {
+      /*
+       * If the threshold has done its job and is no longer active, then let's remove it.
+       */
       this->threshold_triggered_functionality = NULL;
+      Serial.print(" NULLED: ");
+      Serial.println((long)this);      
     }
   }
 }
@@ -70,13 +70,13 @@ void Encoder::decEncPulseCnt() {
     /*
      * Operate the threshold
      */
-    this->threshold_triggered_functionality->increaseCounter();
-
-    /*
-     * If the threshold has done its job and is no longer active, then let's remove it.
-     */
-    if (!this->threshold_triggered_functionality->isThresholdActive()) {
+    if (this->threshold_triggered_functionality->increaseCounter()) {
+      /*
+       * If the threshold has done its job and is no longer active, then let's remove it.
+       */
       this->threshold_triggered_functionality = NULL;
+      Serial.print(" NULLED1: ");
+      Serial.println((long)this);      
     }
   }
 }

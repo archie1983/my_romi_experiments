@@ -210,6 +210,9 @@ void LineSensor::setThreshold(ThresholdCallback* threshold_triggered_functionali
        */
       long thresholdCount = ((double)ms / 1000.0) * current_measurement_frequency;
       threshold_triggered_functionality->setThreshold(thresholdCount);
+
+//      Serial.print("Timer callback: ");
+//      Serial.println((long) threshold_triggered_functionality);
       
       break;
     }

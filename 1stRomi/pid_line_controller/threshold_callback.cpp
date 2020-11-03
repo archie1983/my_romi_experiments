@@ -2,27 +2,44 @@
 
 /**
  * Decreases counter until it reaches 0. Then we trigger and stop.
+ * Returns TRUE when we've reached threshold.
  */
-void ThresholdCallback::decreaseCounter() {
+bool ThresholdCallback::decreaseCounter() {
   if (thresholdOn) {
+//    Serial.print("THRC: ");
+//    Serial.print((long)this);
+//    Serial.print(" : ");
+//    Serial.print(thresholdCount);
+//    Serial.print(" : ");
+//    Serial.println(millis());
     thresholdCount--;
     if (thresholdCount == 0) {
       thresholdReached();
+      return true;
     }
   }
+  return false;
 }
 
 /**
  * Increases counter until it reaches 0. Then we trigger and stop.
+ * Returns TRUE when we've reached threshold.
  */
-void ThresholdCallback::increaseCounter() {
+bool ThresholdCallback::increaseCounter() {
   if (thresholdOn) {
-    //Serial.println(thresholdCount);
+//    Serial.print("THRC#####: ");
+//    Serial.print((long)this);
+//    Serial.print(" : ");
+//    Serial.print(thresholdCount);
+//    Serial.print(" : ");
+//    Serial.println(millis());
     thresholdCount++;
     if (thresholdCount == 0) {
       thresholdReached();
+      return true;
     }
   }
+  return false;
 }
 
 /**

@@ -362,16 +362,16 @@ void talk_about_it(bool full_info) {
 //    Serial.print("Right wheel speed: ");
 //    Serial.println(getRightWheelSpeed());
 
-    Serial.print("Kinematics: ");
-    Serial.print(Kinematics::getKinematics()->getCurrentX_raw());
-    Serial.print(", ");
-    Serial.print(Kinematics::getKinematics()->getCurrentY_raw());
-    Serial.print(", ");
-    Serial.print(Kinematics::getKinematics()->getCurrentX_mm());
-    Serial.print(", ");
-    Serial.print(Kinematics::getKinematics()->getCurrentY_mm());
-    Serial.print(", ");
-    Serial.println(Kinematics::getKinematics()->getCurrentHeading());
+//    Serial.print("Kinematics: ");
+//    Serial.print(Kinematics::getKinematics()->getCurrentX_raw());
+//    Serial.print(", ");
+//    Serial.print(Kinematics::getKinematics()->getCurrentY_raw());
+//    Serial.print(", ");
+//    Serial.print(Kinematics::getKinematics()->getCurrentX_mm());
+//    Serial.print(", ");
+//    Serial.print(Kinematics::getKinematics()->getCurrentY_mm());
+//    Serial.print(", ");
+//    Serial.println(Kinematics::getKinematics()->getCurrentHeading());
 
     /**
      * For charting:.

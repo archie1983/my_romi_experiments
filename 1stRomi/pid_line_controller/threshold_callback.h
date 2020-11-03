@@ -16,13 +16,15 @@ class ThresholdCallback {
 
     /**
      * Decreases counter until it reaches 0. Then we trigger and stop.
+     * Returns TRUE when we've reached threshold.
      */
-    void decreaseCounter();
+    bool decreaseCounter();
 
     /**
      * Increases counter until it reaches 0. Then we trigger and stop.
+     * Returns TRUE when we've reached threshold.
      */
-    void increaseCounter();
+    bool increaseCounter();
 
     /**
      * Sets the threshold.
