@@ -104,6 +104,18 @@ class Encoder {
      * A pointer to the motor control so that we can do something with the motor when the threshold has been reached.
      */
     ThresholdCallback *threshold_triggered_functionality = NULL;
+
+    /**
+     * Threshold was overridden while executing its callback function.
+     * A bit of an exotic flag. Consider this: We have a threshold that
+     * counts down on received encoder pulse. When we get to 0, we execute
+     * the callback function and after that nullify this threshold. But
+     * what happens if part of the callback function is to set a new
+     * threshold? Then this new threshold will be nullified instead of
+     * the old one. To avoid that, we'll use this flag so that we don't
+     * nullify a threshold that was just set.
+     */
+    volatile bool thr_ovr_while_x_cb = false;
 };
 
 #endif

@@ -37,6 +37,12 @@ class Motor : public ThresholdCallback {
     void goForGivenTimeAtGivenSpeed_PID(unsigned int ms, int motor_speed);
 
     /**
+     * Turns the motor at a constant speed controlled by PID for a given amount
+     * of encoder counts.
+     */
+    void goForGivenClicksAtGivenSpeed_PID(long clicks, int motor_speed);
+
+    /**
      * Turns the motor at a constant speed controlled by PID.
      */
     void goAtGivenSpeed_PID(int motor_speed);

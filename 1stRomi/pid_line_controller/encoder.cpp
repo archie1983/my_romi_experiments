@@ -22,7 +22,7 @@ void Encoder::incEncPulseCnt() {
   encoder_pulse_cnt++;
 
   calculate_wheel_speed(1);
-
+//
 //  Serial.print("INCrease Counter1 ");
 //  Serial.print((this->threshold_triggered_functionality == NULL));
 //  Serial.print(" ");
@@ -34,16 +34,33 @@ void Encoder::incEncPulseCnt() {
    * the time.
    */
   if (this->threshold_triggered_functionality != NULL && this->threshold_triggered_functionality->isThresholdActive()) {
+
+    /**
+     * This flag must be false here, because we'll be using it to catch a situation where the threshold is
+     * overridden as part of the callback function which happens inside increaseCounter().
+     */
+    thr_ovr_while_x_cb = false;
     /*
      * Operate the threshold
      */
     if (this->threshold_triggered_functionality->decreaseCounter()) {
       /*
        * If the threshold has done its job and is no longer active, then let's remove it.
+       * Unless of course we've just set up a new threshold while executing the callback
+       * function of the previous one. Please see comment of variable "thr_ovr_while_x_cb".
        */
-      this->threshold_triggered_functionality = NULL;
-      Serial.print(" NULLED: ");
-      Serial.println((long)this);      
+      if (!thr_ovr_while_x_cb) {
+        this->threshold_triggered_functionality = NULL;
+//        Serial.print(" NULLED: ");
+//        Serial.print(thr_ovr_while_x_cb);
+//        Serial.print(" # ");
+//        Serial.print(micros());
+//        Serial.print(" @ ");
+//        Serial.println((long)this);  
+//      } else {
+//        Serial.print(" NEW THR DETECTED, SO NOT NULLED: ");
+//        Serial.println((long)this);
+      }
     }
   }
 }
@@ -67,16 +84,33 @@ void Encoder::decEncPulseCnt() {
    * the time.
    */
   if (this->threshold_triggered_functionality != NULL && this->threshold_triggered_functionality->isThresholdActive()) {
+
+    /**
+     * This flag must be false here, because we'll be using it to catch a situation where the threshold is
+     * overridden as part of the callback function which happens inside increaseCounter().
+     */
+    thr_ovr_while_x_cb = false;
     /*
      * Operate the threshold
      */
     if (this->threshold_triggered_functionality->increaseCounter()) {
       /*
        * If the threshold has done its job and is no longer active, then let's remove it.
+       * Unless of course we've just set up a new threshold while executing the callback
+       * function of the previous one. Please see comment of variable "thr_ovr_while_x_cb".
        */
-      this->threshold_triggered_functionality = NULL;
-      Serial.print(" NULLED1: ");
-      Serial.println((long)this);      
+      if (!thr_ovr_while_x_cb) {
+        this->threshold_triggered_functionality = NULL;
+//        Serial.print(" NULLED1: ");
+//        Serial.print(thr_ovr_while_x_cb);
+//        Serial.print(" # ");
+//        Serial.print(micros());
+//        Serial.print(" @ ");
+//        Serial.println((long)this);
+//      } else {
+//        Serial.print(" NEW THR DETECTED, SO NOT NULLED: ");
+//        Serial.println((long)this);
+      }
     }
   }
 }
@@ -109,11 +143,24 @@ long Encoder::getWheelSpeed() {
  * after the threshold has been reached.
  */
 void Encoder::setThreshold(ThresholdCallback* in_threshold_triggered_functionality) {
+
+  /**
+   * If we're overriding an existing threshold with a new one, then it will be
+   * important to know if that happened as part of the callback of previous
+   * threshold or not. Please see comment of variable "thr_ovr_while_x_cb".
+   */
+  if (threshold_triggered_functionality != NULL) {
+    thr_ovr_while_x_cb = true;
+//    Serial.print(" SETTING thr_ovr_while_x_cb");
+//    Serial.print(thr_ovr_while_x_cb);
+//    Serial.print(" # ");
+//    Serial.println(micros());
+  }
 //  Serial.print("SETTING ENC THR: ");
 //  Serial.print((in_threshold_triggered_functionality == NULL));
   threshold_triggered_functionality = in_threshold_triggered_functionality;
 //  Serial.print(" IS NULL: ");
-//  Serial.print((this->threshold_triggered_functionality == NULL));
+//  Serial.print((threshold_triggered_functionality == NULL));
 //  Serial.print(" ADDR: ");
 //  Serial.println((long)this);
 }

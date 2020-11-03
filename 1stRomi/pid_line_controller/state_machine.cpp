@@ -71,7 +71,7 @@ void StateMachine::setState(LineFollowingStates state) {
   currentState = state;
   switch (state) {
     case TURNING_TO_GO_HOME:
-      Kinematics::getKinematics()->turnToHomeHeading();
+      Kinematics::getKinematics()->turnToHomeHeading(true);
       break;
     case MOVING_TO_GO_HOME:
       Kinematics::getKinematics()->walkDistanceToHome();

@@ -30,9 +30,24 @@ void Motor::goForGivenTimeAtGivenSpeed_PID(unsigned int ms, int motor_speed) {
 }
 
 /**
+ * Turns the motor at a constant speed controlled by PID for a given amount
+ * of encoder counts.
+ */
+void Motor::goForGivenClicksAtGivenSpeed_PID(long clicks, int motor_speed) {
+  stopMotor(); //# to clear and reset PID controller
+  last_requested_motor_speed = motor_speed;
+  turnMotor(convertMotorSpeedToPWM(motor_speed));
+
+  setThreshold(clicks);
+  getEncoder()->setThreshold(this);
+}
+
+/**
  * Turns the motor at a constant speed controlled by PID.
  */
 void Motor::goAtGivenSpeed_PID(int motor_speed) {
+  stopMotor(); //# to clear and reset PID controller
+  
   last_requested_motor_speed = motor_speed;
   turnMotor(convertMotorSpeedToPWM(motor_speed));
 }
@@ -129,8 +144,8 @@ void Motor::goForwardByCounts(unsigned int counts, byte power) {
     setThreshold(counts);
     getEncoder()->setThreshold(this);
     
-    Serial.print("SETTING THR F: ");
-    Serial.print(counts);
+//    Serial.print("SETTING THR F: ");
+//    Serial.print(counts);
 //    Serial.print(" ADDR: ");
 //    Serial.println((long)getEncoder());
   }
@@ -145,8 +160,8 @@ void Motor::goBackwardByCounts(unsigned int counts, byte power) {
     setThreshold((int)-counts); //# need to cast here, otherwise it's interpreted as unsigned int loaded with huge value
     getEncoder()->setThreshold(this);
 
-    Serial.print("SETTING THR B: ");
-    Serial.print(counts);
+//    Serial.print("SETTING THR B: ");
+//    Serial.print(counts);
 //    Serial.print(" ADDR: ");
 //    Serial.println((long)getEncoder());
   }
@@ -178,7 +193,7 @@ Motor* Motor::getLeftMotor() {
  * Callback function overridden from ThresholdCallback class that's been inherited.
  */
 void Motor::callBackFunction() {
-  Serial.println("CALLBACK###############");
+  //Serial.println("CALLBACK###############");
   stopMotor();
 
   /**
@@ -296,6 +311,7 @@ void Motor::stopMotor() {
    */
   this->pid_controller->reset();
   last_requested_motor_speed = 0;
+  //Serial.println("MOTOR STOP");
 }
 
 /**

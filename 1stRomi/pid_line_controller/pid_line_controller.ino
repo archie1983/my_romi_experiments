@@ -211,40 +211,40 @@ void act_on_commands() {
       goHome();
     } else if (in_cmd.indexOf("ta1") > -1) { //# turning experiment
       Serial.println("Turning to pi/2");
-      Kinematics::getKinematics()->turnToAngle(PI / 2);
+      Kinematics::getKinematics()->turnToAngle(PI / 2, false);
     } else if (in_cmd.indexOf("ta2") > -1) { //# turning experiment
       Serial.println("Turning to pi");
-      Kinematics::getKinematics()->turnToAngle(PI);
+      Kinematics::getKinematics()->turnToAngle(PI, false);
     } else if (in_cmd.indexOf("ta3") > -1) { //# turning experiment
       Serial.println("Turning to -pi/2");
-      Kinematics::getKinematics()->turnToAngle(-PI / 2);
+      Kinematics::getKinematics()->turnToAngle(-PI / 2, false);
     } else if (in_cmd.indexOf("ta4") > -1) { //# turning experiment
       Serial.println("Turning to -pi");
-      Kinematics::getKinematics()->turnToAngle(-PI);
+      Kinematics::getKinematics()->turnToAngle(-PI, false);
     } else if (in_cmd.indexOf("ta5") > -1) { //# turning experiment
       Serial.println("Turning to 0");
-      Kinematics::getKinematics()->turnToAngle(0);
+      Kinematics::getKinematics()->turnToAngle(0, false);
     } else if (in_cmd.indexOf("ta6") > -1) { //# turning experiment
       Serial.println("Turning to 2*pi");
-      Kinematics::getKinematics()->turnToAngle(2 * PI);
+      Kinematics::getKinematics()->turnToAngle(2 * PI, false);
     } else if (in_cmd.indexOf("t1") > -1) { //# turning experiment
       Serial.println("Turning by pi/2");
-      Kinematics::getKinematics()->turnByAngle(PI / 2);
+      Kinematics::getKinematics()->turnByAngle(PI / 2, false);
     } else if (in_cmd.indexOf("t2") > -1) { //# turning experiment
       Serial.println("Turning by pi");
-      Kinematics::getKinematics()->turnByAngle(PI);
+      Kinematics::getKinematics()->turnByAngle(PI, false);
     } else if (in_cmd.indexOf("t3") > -1) { //# turning experiment
       Serial.println("Turning by -pi/2");
-      Kinematics::getKinematics()->turnByAngle(-PI / 2);
+      Kinematics::getKinematics()->turnByAngle(-PI / 2, false);
     } else if (in_cmd.indexOf("t4") > -1) { //# turning experiment
       Serial.println("Turning by -pi");
-      Kinematics::getKinematics()->turnByAngle(-PI);
+      Kinematics::getKinematics()->turnByAngle(-PI, false);
     } else if (in_cmd.indexOf("t5") > -1) { //# turning experiment
       Serial.println("Turning by 0");
-      Kinematics::getKinematics()->turnByAngle(0);
+      Kinematics::getKinematics()->turnByAngle(0, false);
     } else if (in_cmd.indexOf("t6") > -1) { //# turning experiment
       Serial.println("Turning by 2*pi");
-      Kinematics::getKinematics()->turnByAngle(2 * PI);
+      Kinematics::getKinematics()->turnByAngle(2 * PI, false);
     } else if (in_cmd.indexOf("pid+") > -1) { //# PID experiment moving forward
       Serial.println("PID experiment forw");
       //Motor::getRightMotor()->goAtGivenSpeed_PID(100);
@@ -435,6 +435,8 @@ long getLeftWheelSpeed() {
  * operation will be executed.
  */
 void goHome() {
+  follow = false;
+  pid_enabled = true;
   /**
    * First we'll make the turn and the rest will follow in the state machine.
    */

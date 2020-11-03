@@ -53,21 +53,30 @@ class Kinematics {
      * Commands the wheels of the robot to turn in such a way
      * that the whole robot turns BY the given angle in radians.
      * 
+     * angle:
      * Positive agrument - turns clock wise
      * Negative argument - turns counter clock wise.
+     * 
+     * bool use_PID - a flag of whether we want to use PID or not.
      */
-    void turnByAngle(float angle);
+    void turnByAngle(float angle, bool use_PID);
 
     /**
      * Commands the wheels of the robot to turn in such a way
      * that the whole robot turns TO the given angle in radians.
+     * 
+     * angle - angle in radians
+     * 
+     * bool use_PID - a flag of whether we want to use PID or not.
      */
-    void turnToAngle(float angle);
+    void turnToAngle(float angle, bool use_PID);
     
     /**
      * Turns to the angle to go home.
+     * 
+     * bool use_PID - a flag of whether we want to use PID or not.
      */
-    void turnToHomeHeading();
+    void turnToHomeHeading(bool use_PID);
 
     /**
      * Runs the motors for the required number of counts to get back

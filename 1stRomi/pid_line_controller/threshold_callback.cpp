@@ -6,7 +6,7 @@
  */
 bool ThresholdCallback::decreaseCounter() {
   if (thresholdOn) {
-//    Serial.print("THRC: ");
+//    Serial.print("DECR THRC: ");
 //    Serial.print((long)this);
 //    Serial.print(" : ");
 //    Serial.print(thresholdCount);
@@ -27,7 +27,7 @@ bool ThresholdCallback::decreaseCounter() {
  */
 bool ThresholdCallback::increaseCounter() {
   if (thresholdOn) {
-//    Serial.print("THRC#####: ");
+//    Serial.print("INCR THRC: ");
 //    Serial.print((long)this);
 //    Serial.print(" : ");
 //    Serial.print(thresholdCount);
@@ -46,6 +46,8 @@ bool ThresholdCallback::increaseCounter() {
  * Sets the threshold.
  */
 void ThresholdCallback::setThreshold(long count) {
+//  Serial.println("Setting THR count: ");
+//  Serial.println(count);
   thresholdCount = count;
   thresholdOn = true;
 }

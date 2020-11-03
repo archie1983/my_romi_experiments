@@ -52,19 +52,28 @@ float Kinematics::getAngleToGoHome() {
  * Commands the wheels of the robot to turn in such a way
  * that the whole robot turns BY the given angle in radians.
  * 
+ * angle:
  * Positive agrument - turns clock wise
  * Negative argument - turns counter clock wise.
+ * 
+ * bool use_PID - a flag of whether we want to use PID or not.
  */
-void Kinematics::turnByAngle(float angle) {
+void Kinematics::turnByAngle(float angle, bool use_PID) {
   int left_counts = getCountsForRotationByAngle(angle);
+  int right_counts = -left_counts;
   unsigned int counts = abs(left_counts);
 
-  if (left_counts > 0) {
-    Motor::getLeftMotor()->moveByCounts(counts, turning_power);
-    Motor::getRightMotor()->moveByCounts(counts, -turning_power);
+  if (use_PID) {
+    Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(left_counts, (left_counts > 0 ? WALK_HOME_SPEED : -WALK_HOME_SPEED));
+    Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(right_counts, (right_counts > 0 ? WALK_HOME_SPEED : -WALK_HOME_SPEED));
   } else {
-    Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
-    Motor::getRightMotor()->moveByCounts(counts, turning_power);    
+    if (left_counts > 0) {
+      Motor::getLeftMotor()->moveByCounts(counts, turning_power);
+      Motor::getRightMotor()->moveByCounts(counts, -turning_power);
+    } else {
+      Motor::getLeftMotor()->moveByCounts(counts, -turning_power);
+      Motor::getRightMotor()->moveByCounts(counts, turning_power);    
+    }
   }
 }
 
@@ -72,15 +81,15 @@ void Kinematics::turnByAngle(float angle) {
  * Commands the wheels of the robot to turn in such a way
  * that the whole robot turns TO the given angle in radians.
  */
-void Kinematics::turnToAngle(float angle) {
-  turnByAngle(angle - getCurrentHeading());
+void Kinematics::turnToAngle(float angle, bool use_PID) {
+  turnByAngle(angle - getCurrentHeading(), use_PID);
 }
 
 /**
  * Turns to the angle to go home.
  */
-void Kinematics::turnToHomeHeading() {
-  turnToAngle(getAngleToGoHome());
+void Kinematics::turnToHomeHeading(bool use_PID) {
+  turnToAngle(getAngleToGoHome(), use_PID);
 }
 
 /**
@@ -89,8 +98,18 @@ void Kinematics::turnToHomeHeading() {
  * has to be called and it of course needs to finish before this function.
  */
 void Kinematics::walkDistanceToHome() {
-  Motor::getRightMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
-  Motor::getLeftMotor()->goForwardForGivenTimeAtGivenPower(5000, 100);
+  long y_home = 0;
+  long x_home = 0;
+  long y_to_home = y_home - current_y;
+  long x_to_home = x_home - current_x;
+
+  /**
+   * Pithagorus theorem gives us the direct bee-line home.
+   */
+  float distance_home = sqrt(x_to_home * x_to_home + y_to_home * y_to_home);
+  
+  Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
+  Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
 }
 
 /**
