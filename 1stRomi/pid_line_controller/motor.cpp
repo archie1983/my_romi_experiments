@@ -24,8 +24,8 @@ void Motor::goBackwardForGivenTimeAtGivenPower(unsigned int ms, byte power) {
  * of ms.
  */
 void Motor::goForGivenTimeAtGivenSpeed_PID(unsigned int ms, int motor_speed) {
-  last_requested_motor_speed = motor_speed;
   turnMotor(convertMotorSpeedToPWM(motor_speed));
+  setRequestedSpeed_PID(motor_speed);
   LineSensor::setThreshold(this, ms);
 }
 
@@ -35,8 +35,8 @@ void Motor::goForGivenTimeAtGivenSpeed_PID(unsigned int ms, int motor_speed) {
  */
 void Motor::goForGivenClicksAtGivenSpeed_PID(long clicks, int motor_speed) {
   stopMotor(); //# to clear and reset PID controller
-  last_requested_motor_speed = motor_speed;
   turnMotor(convertMotorSpeedToPWM(motor_speed));
+  setRequestedSpeed_PID(motor_speed);
 
   setThreshold(clicks);
   getEncoder()->setThreshold(this);
@@ -48,8 +48,8 @@ void Motor::goForGivenClicksAtGivenSpeed_PID(long clicks, int motor_speed) {
 void Motor::goAtGivenSpeed_PID(int motor_speed) {
   stopMotor(); //# to clear and reset PID controller
   
-  last_requested_motor_speed = motor_speed;
   turnMotor(convertMotorSpeedToPWM(motor_speed));
+  setRequestedSpeed_PID(motor_speed);
 }
 
 /**
@@ -91,14 +91,22 @@ int Motor::getLastRequestedMotorSpeed_PID() {
  * needs to be requested from the motor PIDs.
  */
 void Motor::updateRequestedSpeedByAFactor_PID(float correction_factor) {
-  last_requested_motor_speed = correction_factor * last_requested_motor_speed;
+  setRequestedSpeed_PID(correction_factor * last_requested_motor_speed);
 }
 
 /**
  * Sets the target speed for the motro PID.
  */
 void Motor::setRequestedSpeed_PID(int new_speed) {
+  this->pid_controller->setUpdatesWanted(true);
   last_requested_motor_speed = new_speed;
+}
+
+/**
+ * Return a flag of whether the PID controller of this motor wants updates.
+ */
+bool Motor::isPIDUpdatesWanted() {
+  return this->pid_controller->isUpdatesWanted();
 }
 
 /**
@@ -309,6 +317,7 @@ void Motor::stopMotor() {
   /**
    * PID things.
    */
+  this->pid_controller->setUpdatesWanted(false);
   this->pid_controller->reset();
   last_requested_motor_speed = 0;
   //Serial.println("MOTOR STOP");

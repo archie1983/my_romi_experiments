@@ -17,6 +17,16 @@ class PID_c {
     float Ki_output = 0;
     float Kd_output = 0;
 
+    /**
+     * Returns a flag of whether this PID controller needs to be updated or not.
+     */
+    bool isUpdatesWanted();
+
+    /**
+     * Sets a flag of whether this PID controller needs to be updated or not.
+     */
+    void setUpdatesWanted(bool yes_or_no);
+    
     /* Private functions and variables are defined here. These functions / variables cannot be accessed from outside the class.
        For example, if we try to set the value of Kp in the file "Romi.h", we will get an error (Try it out!)
     */
@@ -32,5 +42,10 @@ class PID_c {
     float last_error          = 0; //For calculating the derivative term
     float integral_error      = 0; //For storing the integral of the error
     unsigned long last_millis = 0;
+
+    /**
+     * A flag of whether this PID controller wants to be updated or not.
+     */
+    bool updates_wanted = false;
 };
 #endif

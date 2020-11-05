@@ -86,6 +86,18 @@ class Kinematics {
     void walkDistanceToHome();
 
     /**
+     * Here we just want to set our motors to run at steady pace (with the heading PID disabled) to go straight.
+     * We should be looking for the line meanwhile - once the line sensors report a reliable signal, this should
+     * be stopped, but that's what we have the state machine for.
+     */
+    void walkStraightLookingForLine();
+
+    /**
+     * Here we want to stop the motors and disable their PID controllers.
+     */
+    void fullStop();
+
+    /**
      * Static accessor for our kinematics object.
      */
     static Kinematics* getKinematics();

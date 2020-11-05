@@ -114,6 +114,11 @@ class Motor : public ThresholdCallback {
      * Callback function overridden from ThresholdCallback class that's been inherited.
      */
     void callBackFunction();
+
+    /**
+     * Return a flag of whether the PID controller of this motor wants updates.
+     */
+    bool isPIDUpdatesWanted();
     
   private:
     /**

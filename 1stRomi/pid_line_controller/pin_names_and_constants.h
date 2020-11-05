@@ -55,6 +55,8 @@
 #define WHEEL_WIDTH 6.6        //# Width of the wheel is 6.6mm according to https://www.pololu.com/file/0J1708/pololu-wheel-dimensions.pdf
 
 #define WALK_HOME_SPEED 300    //# Speed to use when walking home (back to origin).
+#define LOOK_FOR_LINE_SPEED 150    //# Speed to use when we've lost the line and are looking for it.
+#define A_100_DEGREES_IN_RADIANS (100.0 * PI / 180.0)
 
 /**
  * Romi wheels are then separated (middle of the wheel to middle of the wheel) by this distance

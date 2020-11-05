@@ -2,6 +2,7 @@
 #define _STATE_MACHINE_
 
 #include <Arduino.h>
+#include "pid.h" //# we'll want to have control of the heading PID in state machine.
 
 /**
  * This is a class that provides a state machine and a state transfer function to move from
@@ -32,12 +33,22 @@ class StateMachine {
     void update();
 
     /**
+     * Update function for the states that require line sensor values to transition.
+     */
+    void update(bool left_line_visible, bool centre_line_visible, bool right_line_visible);
+
+    /**
      * Sets the current state to the given one and executes a function
      * related to that state.
      */
     void setState(LineFollowingStates state);
 
     static StateMachine* getStateMachine();
+
+    /**
+     * Provides a reference of the heading PID to the state machine.
+     */
+    void setHeadingPID(PID_c * in_heading_pid);
 
   private:
     LineFollowingStates currentState = LineFollowingStates::IDLING;
@@ -48,6 +59,11 @@ class StateMachine {
      * Private constructore, because we only want one sate machine - a singleton.
      */
     StateMachine(LineFollowingStates initialState);
+
+    /**
+     * A reference to the heading PID.
+     */
+    PID_c * heading_pid;
 };
 
 #endif

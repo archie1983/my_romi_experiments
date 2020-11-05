@@ -113,6 +113,24 @@ void Kinematics::walkDistanceToHome() {
 }
 
 /**
+ * Here we just want to set our motors to run at steady pace (with the heading PID disabled) to go straight.
+ * We should be looking for the line meanwhile - once the line sensors report a reliable signal, this should
+ * be stopped, but that's what we have the state machine for.
+ */
+void Kinematics::walkStraightLookingForLine() {
+  Motor::getRightMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
+  Motor::getLeftMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
+}
+
+/**
+ * Here we want to stop the motors and disable their PID controllers.
+ */
+void Kinematics::fullStop() {
+  Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
+  Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();  
+}
+
+/**
  * Static accessor for our kinematics object.
  */
 Kinematics* Kinematics::getKinematics() {

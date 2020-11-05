@@ -5,6 +5,18 @@
 #include "kinematics.h"
 #include "state_machine.h"
 
+
+/**
+ * This will be our heading PID controller. The input will be the weighed line sensor value [-1.0, 1.0].
+ * The output naturally will also be a value with boundaries [-1.0, 1.0]. We'll be setting the bias to
+ * 0 to get the robot to go straight and to some positive or negative value withing the same boundaries
+ * [-1.0, 1.0] to get it to turn left or right.
+ * 
+ * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
+ * the other.
+ */
+PID_c heading_pid(0.7, 0.04, 3.0);
+
 void setup() {
   // Start Serial monitor and print "reset"
   // so we know if the board is reseting
@@ -25,24 +37,9 @@ void setup() {
    */
   LineSensor::reInitTimer(LINE_SENSOR_UPDATE_FREQUENCY);
 
+  StateMachine::getStateMachine()->setHeadingPID(&heading_pid);
   StateMachine::getStateMachine()->setState(StateMachine::LineFollowingStates::IDLING);
 }
-
-/**
- * This will be our heading PID controller. The input will be the weighed line sensor value [-1.0, 1.0].
- * The output naturally will also be a value with boundaries [-1.0, 1.0]. We'll be setting the bias to
- * 0 to get the robot to go straight and to some positive or negative value withing the same boundaries
- * [-1.0, 1.0] to get it to turn left or right.
- * 
- * Obviously the non-0 output should increase the speed of one of the wheels and de-crease the speed of
- * the other.
- */
-PID_c heading_pid(0.7, 0.04, 3.0);
-
-/**
- * A flag of whether we want to follow the line or not.
- */
-bool follow = false;
 
 void loop() {  
   act_on_commands();
@@ -54,7 +51,6 @@ long time_last_report = 0;
 long time_last_kinematics_update = 0;
 long time_last_mpid = 0;
 long time_last_hpid = 0;
-bool pid_enabled = false;
 
 void event_scheduler() {
   time_now = millis();
@@ -68,16 +64,23 @@ void event_scheduler() {
    * These motor PIDs may need to be updated even if we're not following a line.
    * We may be just going forward or back for a given time.
    */
-  if ((pid_enabled || follow) && time_now - time_last_mpid >= MOTOR_PID_UPDATE_TIME) {
-    Motor::getRightMotor()->updateMotorPIDcontroller(getRightWheelSpeed());
-    Motor::getLeftMotor()->updateMotorPIDcontroller(getLeftWheelSpeed());
+  if ((Motor::getLeftMotor()->isPIDUpdatesWanted() || Motor::getRightMotor()->isPIDUpdatesWanted()) && time_now - time_last_mpid >= MOTOR_PID_UPDATE_TIME) {
+    
+    if (Motor::getLeftMotor()->isPIDUpdatesWanted()){
+      Motor::getLeftMotor()->updateMotorPIDcontroller(getLeftWheelSpeed());
+    }
+
+    if (Motor::getRightMotor()->isPIDUpdatesWanted()){
+      Motor::getRightMotor()->updateMotorPIDcontroller(getRightWheelSpeed());
+    }
+
     time_last_mpid = time_now;
   }
 
   /*
    * If that's what user wants and it's time for that, then follow the line
    */
-  if (follow && time_now - time_last_hpid >= HEADING_PID_UPDATE_TIME) {
+  if (heading_pid.isUpdatesWanted() && time_now - time_last_hpid >= HEADING_PID_UPDATE_TIME) {
     nested_pid_weighed_sensors();
     time_last_hpid = time_now;
   }
@@ -288,9 +291,9 @@ void act_on_commands() {
       Motor::getRightMotor()->goForwardByCounts(steps_to_move, 35);
       Motor::getLeftMotor()->goForwardByCounts(steps_to_move, 35);
     } else if(in_cmd.indexOf("follow") > -1) { //# if we want to follow the line
-      follow = !follow;
+      heading_pid.setUpdatesWanted(!heading_pid.isUpdatesWanted());
 
-      if (follow) {
+      if (heading_pid.isUpdatesWanted()) {
         heading_pid.reset();
         Serial.println("Following line");
       } else {
@@ -435,8 +438,6 @@ long getLeftWheelSpeed() {
  * operation will be executed.
  */
 void goHome() {
-  follow = false;
-  pid_enabled = true;
   /**
    * First we'll make the turn and the rest will follow in the state machine.
    */
