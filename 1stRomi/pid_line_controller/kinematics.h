@@ -16,6 +16,11 @@
  */
 #define mmToEncoderCounts(mm_to_convert) (mm_to_convert / MM_PER_PULSE) //# conversion from pulses to mm.
 
+/**
+ * Converst angle in degrees to an angle in radians
+ */
+#define degreesToRadians(deg) (deg * PI / 180.0) //# conversion from degrees to radians
+
 class Kinematics {
   public:
 
@@ -91,6 +96,21 @@ class Kinematics {
      * be stopped, but that's what we have the state machine for.
      */
     void walkStraightLookingForLine();
+
+    /**
+     * Turns left by the required angle to try to find the line
+     */
+    void searchForLineByTurningLeft();
+    
+    /**
+     * Turns right by the required angle to try to find the line
+     */
+    void searchForLineByTurningRight();
+
+    /**
+     * Turns back to where we were before we started looking right and left.
+     */
+    void searchForLineByTurningBack();
 
     /**
      * Here we want to stop the motors and disable their PID controllers.

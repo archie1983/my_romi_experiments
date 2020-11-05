@@ -56,7 +56,9 @@
 
 #define WALK_HOME_SPEED 300    //# Speed to use when walking home (back to origin).
 #define LOOK_FOR_LINE_SPEED 150    //# Speed to use when we've lost the line and are looking for it.
-#define A_100_DEGREES_IN_RADIANS (100.0 * PI / 180.0)
+#define ANGLE_TO_TURN_RIGHT_WHEN_FINDING_LINE 100 //# first turn 100 degrees right
+#define ANGLE_TO_TURN_LEFT_WHEN_FINDING_LINE -200 //# now we turn the hundred degrees back and another 100 to the left.
+#define ANGLE_TO_TURN_BACK_WHEN_FINDING_LINE 100 //# now we turn back to where we were before we started looking for the line.
 
 /**
  * Romi wheels are then separated (middle of the wheel to middle of the wheel) by this distance

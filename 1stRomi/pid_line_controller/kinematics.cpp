@@ -120,6 +120,9 @@ void Kinematics::walkDistanceToHome() {
 void Kinematics::walkStraightLookingForLine() {
   Motor::getRightMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
   Motor::getLeftMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
+
+//  Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
+//  Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
 }
 
 /**
@@ -128,6 +131,27 @@ void Kinematics::walkStraightLookingForLine() {
 void Kinematics::fullStop() {
   Motor::getRightMotor()->stopMotorAndCancelPreviousInstruction();
   Motor::getLeftMotor()->stopMotorAndCancelPreviousInstruction();  
+}
+
+/**
+ * Turns left by the required angle to try to find the line
+ */
+void Kinematics::searchForLineByTurningLeft() {
+  turnByAngle(degreesToRadians(ANGLE_TO_TURN_LEFT_WHEN_FINDING_LINE), true);
+}
+
+/**
+ * Turns left by the required angle to try to find the line
+ */
+void Kinematics::searchForLineByTurningRight() {
+  turnByAngle(degreesToRadians(ANGLE_TO_TURN_RIGHT_WHEN_FINDING_LINE), true);
+}
+
+/**
+ * Turns back to where we were before we started looking right and left.
+ */
+void Kinematics::searchForLineByTurningBack() {
+  turnByAngle(degreesToRadians(ANGLE_TO_TURN_BACK_WHEN_FINDING_LINE), true);
 }
 
 /**
