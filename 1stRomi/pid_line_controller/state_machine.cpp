@@ -30,7 +30,15 @@ void StateMachine::update() {
       setState(TURNING_BACK_TO_FIND_LINE_MOTOR1_DONE); //# Let's wait for the other motor.
       break;
     case TURNING_BACK_TO_FIND_LINE_MOTOR1_DONE: //# Both motors have achieved their target to put us back to where we were before starting to look right and left.
-      setState(LOOKING_FOR_LINE_MOVING_FORWARD); //# Now we'll move forwards and continue looking for line.
+      /**
+       * If we're quite far away from home already, then this is probably the end of the track and we should go back.
+       * Otherwise, it's probably the gap in the line and we should go forward looking for line.
+       */
+      if (Kinematics::getKinematics()->tooFarFromHomeToLookForLine()) {
+        setState(TURNING_TO_GO_HOME); //# Now we'll go back home instead of looking for the line because we're far enough from home.
+      } else {
+        setState(LOOKING_FOR_LINE_MOVING_FORWARD); //# Now we'll move forwards and continue looking for line.
+      }
       break;
     case TURNING_TO_GO_HOME:  //# We're turning to get to the heading that will lead us back home and one of the motors has already achieved its target.
       setState(TURNING_TO_GO_HOME_MOTOR1_DONE); //# Let's wait for the other motor.

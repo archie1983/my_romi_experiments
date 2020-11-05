@@ -38,6 +38,17 @@ class Kinematics {
     double getCurrentHeading();
 
     /**
+     * Returns the current distance from home.
+     */
+    long getCurrentDistanceFromHome();
+
+    /**
+     * Returns a flag of whether we're far enough from home to not bother looking for line anymore
+     * and instead go home if we can't find it by turning after it's been lost.
+     */
+    bool tooFarFromHomeToLookForLine();
+
+    /**
      * Returns the required number of encoder counts for the LEFT wheel
      * that we need for a rotation BY the given angle. The angle is given
      * in radians and the function returns encoder count for the LEFT wheel.

@@ -93,11 +93,9 @@ void Kinematics::turnToHomeHeading(bool use_PID) {
 }
 
 /**
- * Runs the motors for the required number of counts to get back
- * home provided that we're already orientated to home. turnToHomeHeading()
- * has to be called and it of course needs to finish before this function.
+ * Returns the current distance from home.
  */
-void Kinematics::walkDistanceToHome() {
+long Kinematics::getCurrentDistanceFromHome() {
   long y_home = 0;
   long x_home = 0;
   long y_to_home = y_home - current_y;
@@ -106,7 +104,24 @@ void Kinematics::walkDistanceToHome() {
   /**
    * Pithagorus theorem gives us the direct bee-line home.
    */
-  float distance_home = sqrt(x_to_home * x_to_home + y_to_home * y_to_home);
+  return (long)sqrt(x_to_home * x_to_home + y_to_home * y_to_home);
+}
+
+/**
+ * Returns a flag of whether we're far enough from home to not bother looking for line anymore
+ * and instead go home if we can't find it by turning after it's been lost.
+ */
+bool Kinematics::tooFarFromHomeToLookForLine() {
+  return getCurrentDistanceFromHome() > DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE;
+}
+
+/**
+ * Runs the motors for the required number of counts to get back
+ * home provided that we're already orientated to home. turnToHomeHeading()
+ * has to be called and it of course needs to finish before this function.
+ */
+void Kinematics::walkDistanceToHome() {
+  long distance_home = getCurrentDistanceFromHome();
   
   Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
   Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
@@ -121,8 +136,8 @@ void Kinematics::walkStraightLookingForLine() {
   Motor::getRightMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
   Motor::getLeftMotor()->setRequestedSpeed_PID(LOOK_FOR_LINE_SPEED);
 
-//  Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
-//  Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, WALK_HOME_SPEED);
+//  Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(mmToEncoderCounts(), LOOK_FOR_LINE_SPEED);
+//  Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(distance_home, LOOK_FOR_LINE_SPEED);
 }
 
 /**
