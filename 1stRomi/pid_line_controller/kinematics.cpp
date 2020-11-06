@@ -64,8 +64,8 @@ void Kinematics::turnByAngle(float angle, bool use_PID) {
   unsigned int counts = abs(left_counts);
 
   if (use_PID) {
-    Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(left_counts, (left_counts > 0 ? WALK_HOME_SPEED : -WALK_HOME_SPEED));
-    Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(right_counts, (right_counts > 0 ? WALK_HOME_SPEED : -WALK_HOME_SPEED));
+    Motor::getLeftMotor()->goForGivenClicksAtGivenSpeed_PID(left_counts, (left_counts > 0 ? TURNING_SPEED : -TURNING_SPEED));
+    Motor::getRightMotor()->goForGivenClicksAtGivenSpeed_PID(right_counts, (right_counts > 0 ? TURNING_SPEED : -TURNING_SPEED));
   } else {
     if (left_counts > 0) {
       Motor::getLeftMotor()->moveByCounts(counts, turning_power);
@@ -112,6 +112,10 @@ long Kinematics::getCurrentDistanceFromHome() {
  * and instead go home if we can't find it by turning after it's been lost.
  */
 bool Kinematics::tooFarFromHomeToLookForLine() {
+  if (OPER_MODE == DEBUG_MODE) {
+    Serial.print("TO HOME: ");
+    Serial.println(getCurrentDistanceFromHome());
+  }
   return getCurrentDistanceFromHome() > DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE;
 }
 

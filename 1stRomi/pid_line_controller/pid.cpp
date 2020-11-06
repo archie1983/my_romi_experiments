@@ -100,7 +100,15 @@ float PID_c::update(float demand, float measurement) {
      * If error_delta is positive, then our error has increased since last time and if it's negative,
      * then our error has decreased since last time.
      */
-    float error_delta = (error - last_error) / time_delta;
+    float error_delta = 0.0;
+    /**
+     * If time_delta is 0, then it means we've just reset and are updating a bit early.
+     * Ignore derivative term then.
+     */
+    if (time_delta != 0) {
+      error_delta = (error - last_error) / time_delta;
+    }
+    
     last_error = error;
   
     /**
@@ -115,7 +123,8 @@ float PID_c::update(float demand, float measurement) {
      * Not using time_delta here, because I've overlooked it, however since my PID
      * algorightm seems to work, I'm leaving this as is for now.
      */
-    integral_error += error;// * time_delta;
+    //integral_error += error;// * time_delta;
+    integral_error += error * time_delta;
   
     //Calculate P,I,D Term contributions.
     Kp_output = Kp * error;

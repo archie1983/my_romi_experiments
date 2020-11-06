@@ -330,5 +330,5 @@ void Motor::stopMotor() {
  * 
  * Kp = 0.2 Kd = 3.0 and Ki = 0.04 look like good candidate- very little oscillation and good adjustments.
  */
-Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, RIGHT_MOTOR, new PID_c(0.2, 0.04, 3.0));
-Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, LEFT_MOTOR, new PID_c(0.5, 0.08, 4.0));
+Motor* Motor::rightMotor = new Motor(RIGHT_MOTOR_DIR, RIGHT_MOTOR_RUN, RIGHT_MOTOR, new PID_c(R_MOTOR_PID_P, R_MOTOR_PID_I, R_MOTOR_PID_D));
+Motor* Motor::leftMotor = new Motor(LEFT_MOTOR_DIR, LEFT_MOTOR_RUN, LEFT_MOTOR, new PID_c(L_MOTOR_PID_P, L_MOTOR_PID_I, L_MOTOR_PID_D));//new PID_c(0.5, 0.08, 4.0));

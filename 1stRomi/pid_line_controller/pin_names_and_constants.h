@@ -6,7 +6,7 @@
  */
 #define LINE_SENSOR_COUNT 3 //# how many line sensors we have
 #define LINE_SENSOR_CALIBRATION_VALUE_COUNT 50 //# how many calibration values we want to calibrate on (be careful not to overflow the adder)
-#define LINE_SENSOR_UPDATE_FREQUENCY 25 //# how fast we want our sensors updated.
+#define LINE_SENSOR_UPDATE_FREQUENCY 100 //# how fast we want our sensors updated.
 #define MAX_CALLBACKS_FOR_TIMER 2 //# how many callbacks can we have for timer3, which also drives line sensor.
 
 /**
@@ -29,10 +29,31 @@
 /**
  * Scheduler time constants
  */
-#define MOTOR_PID_UPDATE_TIME 10 //# update time in ms for PID controller.
+#define MOTOR_PID_UPDATE_TIME 1 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
-#define HEADING_PID_UPDATE_TIME 25 //# update time in ms for PID controller.
+#define HEADING_PID_UPDATE_TIME 5 //# update time in ms for PID controller.
 #define KINEMATICS_UPDATE_TIME 25 //# update time in ms for kinematics data.
+#define STATE_MACH_UPDATE_TIME 25 //# update time in ms for state machine line sensor data.
+
+/**
+ * PID constants
+ */
+#define HEADING_PID_P 0.7
+#define HEADING_PID_I 0.0008
+#define HEADING_PID_D 3.0
+
+#define L_MOTOR_PID_P 0.2
+#define L_MOTOR_PID_I 0.004
+#define L_MOTOR_PID_D 3.0
+
+#define R_MOTOR_PID_P 0.2
+#define R_MOTOR_PID_I 0.004
+#define R_MOTOR_PID_D 3.0
+
+/**
+ * How much of weighed line sensor bias do we tolerate withou adjustments either way
+ */
+#define HEADING_TOLERANCE 0.1
 
 /**
  * Encoder pins
@@ -56,10 +77,18 @@
 
 #define WALK_HOME_SPEED 300    //# Speed to use when walking home (back to origin).
 #define LOOK_FOR_LINE_SPEED 150    //# Speed to use when we've lost the line and are looking for it.
+/**
+ * Speed to use when we're travelling the line.
+ * 
+ * This will be nominal speed for the motors (encoder counts per second) when 
+ * running with a nested PID controller. 
+ */
+#define TRAVEL_LINE_SPEED 150
+#define TURNING_SPEED 100 //# We'll be sending this value adjusted by the heading_correction parameter when turning.
 #define ANGLE_TO_TURN_RIGHT_WHEN_FINDING_LINE 100.0 //# first turn 100 degrees right
 #define ANGLE_TO_TURN_LEFT_WHEN_FINDING_LINE -200.0 //# now we turn the hundred degrees back and another 100 to the left.
 #define ANGLE_TO_TURN_BACK_WHEN_FINDING_LINE 100.0 //# now we turn back to where we were before we started looking for the line.
-#define DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE 500 //# If we're this far (distance in mm) from home, then don't go straight looking for line anymore if turning left and right didn't find it. Instead go home.
+#define DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE 1500 //# If we're this far (distance in mm) from home, then don't go straight looking for line anymore if turning left and right didn't find it. Instead go home.
 
 /**
  * Romi wheels are then separated (middle of the wheel to middle of the wheel) by this distance
@@ -70,5 +99,12 @@
  * LED
  */
 #define YELLOW_LED 13
+
+/**
+ * Is the current operating mode DEBUG or PRODUCTION
+ */
+#define DEBUG_MODE 1
+#define PRODUCTION_MODE 0
+#define OPER_MODE (DEBUG_MODE)
 
 #endif

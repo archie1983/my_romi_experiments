@@ -8,9 +8,9 @@
  */
 void StateMachine::update() {
   switch (currentState) {
-    case IDLING:
-      setState(LOOKING_FOR_LINE_MOVING_FORWARD);
-      break;
+//    case IDLING:
+//      setState(LOOKING_FOR_LINE_MOVING_FORWARD);
+//      break;
     case LINE_LOST: //# line was lost, so we'll turn right first
       setState(LOOKING_FOR_LINE_TURNING_RIGHT);
       break;
@@ -184,7 +184,7 @@ void StateMachine::setState(LineFollowingStates state) {
        * Once we've stopped, we should now wait a little bit so that wheel inertia dies down
        * and then we carry on with the next state transition.
        */
-      delay(100);
+      //delay(100);
       update(); //# this will cause a recursive call of this setState function, but it should be able to handle it.
       break;
     case LOOKING_FOR_LINE_TURNING_RIGHT:
