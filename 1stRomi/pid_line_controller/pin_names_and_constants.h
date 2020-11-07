@@ -6,8 +6,20 @@
  */
 #define LINE_SENSOR_COUNT 3 //# how many line sensors we have
 #define LINE_SENSOR_CALIBRATION_VALUE_COUNT 50 //# how many calibration values we want to calibrate on (be careful not to overflow the adder)
-#define LINE_SENSOR_UPDATE_FREQUENCY 100 //# how fast we want our sensors updated.
+#define LINE_SENSOR_UPDATE_FREQUENCY 1000 //# how fast we want our sensors updated.
 #define MAX_CALLBACKS_FOR_TIMER 2 //# how many callbacks can we have for timer3, which also drives line sensor.
+#define LINE_DETECTION_THRESHOLD 300 //# if we detect a calibrated value over this level, then we're over line
+/**
+ * how fast we want to update our wheel speed in timer 3. If we do this too fast, then on slow speeds
+ * we may get 0 speed occasionally and that wreaks havoc in PID controllers.
+ */
+#define WHEEL_SPEED_UPDATE_FREQUENCY 25
+
+/**
+ * how many line sensor readings do we want to average in a rolling average calculation
+ * The final decision of the line sensor reading will actually be the rolling average value.
+ */
+#define LINE_SENSOR_AVG_ROLL_COUNT 10
 
 /**
  * Line sensor pins
@@ -29,31 +41,48 @@
 /**
  * Scheduler time constants
  */
-#define MOTOR_PID_UPDATE_TIME 1 //# update time in ms for PID controller.
+#define MOTOR_PID_UPDATE_TIME 5 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
-#define HEADING_PID_UPDATE_TIME 5 //# update time in ms for PID controller.
+#define HEADING_PID_UPDATE_TIME 35 //# update time in ms for PID controller.
 #define KINEMATICS_UPDATE_TIME 25 //# update time in ms for kinematics data.
 #define STATE_MACH_UPDATE_TIME 25 //# update time in ms for state machine line sensor data.
 
 /**
  * PID constants
+ * 0.7, 0.0008, 3.0 - even worse exaggurations
+ * 0.3, 0.0005, 1.0 - exagurations
+ * 0.3, 0.0005, 3.0 - still exagurations
+ * 0.5, 0.0005, 3.0 - can't recover when finding line
+ * 0.4, 0.0005, 3.0 - almost good, but loses line on arc and can't recover
+ * 0.35, 0.0005, 3.0 - overshoots
+ * 0.35, 0.0005, 3.0 - overshoots, but only on 135 degree line
  */
-#define HEADING_PID_P 0.7
-#define HEADING_PID_I 0.0008
+#define HEADING_PID_P 0.2
+#define HEADING_PID_I 0.0003
 #define HEADING_PID_D 3.0
 
-#define L_MOTOR_PID_P 0.2
+#define L_MOTOR_PID_P 0.8
 #define L_MOTOR_PID_I 0.004
-#define L_MOTOR_PID_D 3.0
+#define L_MOTOR_PID_D 6.5
 
-#define R_MOTOR_PID_P 0.2
+// (0.2, 0.04, 3.0) - ringing
+// 0.1 0.004 2.5 - -300 overshoot
+// (0.2, 0.004, 3.0) - -300 overshoot
+// (0.4, 0.004, 2.5) - -250 overshoot
+// (0.6, 0.004, 10.5) - ringing
+// (0.6, 0.004, 6.5) - -240 overshot
+// (0.75, 0.004, 6.5) - -230 overshot
+// (0.9, 0.004, 6.5) - -290 overshot
+// (0.65, 0.004, 6.5) - -350 overshot
+// (0.8, 0.004, 6.5) - -210 overshot
+#define R_MOTOR_PID_P 0.8
 #define R_MOTOR_PID_I 0.004
-#define R_MOTOR_PID_D 3.0
+#define R_MOTOR_PID_D 6.5
 
 /**
  * How much of weighed line sensor bias do we tolerate withou adjustments either way
  */
-#define HEADING_TOLERANCE 0.1
+#define HEADING_TOLERANCE 0.3
 
 /**
  * Encoder pins
@@ -84,7 +113,8 @@
  * running with a nested PID controller. 
  */
 #define TRAVEL_LINE_SPEED 150
-#define TURNING_SPEED 100 //# We'll be sending this value adjusted by the heading_correction parameter when turning.
+#define WLS_TURNING_SPEED 45 //# We'll be sending this value adjusted by the heading_correction value incrementally adding to the speed when turning while operating weighed line sensor.
+#define TURNING_SPEED 100 //# We'll be sending this value to motor PID controllers when we need to turn by a given angle.
 #define ANGLE_TO_TURN_RIGHT_WHEN_FINDING_LINE 100.0 //# first turn 100 degrees right
 #define ANGLE_TO_TURN_LEFT_WHEN_FINDING_LINE -200.0 //# now we turn the hundred degrees back and another 100 to the left.
 #define ANGLE_TO_TURN_BACK_WHEN_FINDING_LINE 100.0 //# now we turn back to where we were before we started looking for the line.
@@ -105,6 +135,6 @@
  */
 #define DEBUG_MODE 1
 #define PRODUCTION_MODE 0
-#define OPER_MODE (DEBUG_MODE)
+#define OPER_MODE (PRODUCTION_MODE)
 
 #endif

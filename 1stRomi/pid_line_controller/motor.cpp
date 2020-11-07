@@ -72,6 +72,8 @@ void Motor::updateMotorPIDcontroller(int current_motor_speed) {
 //      Serial.print("New requested power: ");
 //      Serial.println((additional_required_speed + last_requested_motor_speed) / 3.5);
 
+//      Serial.print(last_requested_motor_speed);
+//      Serial.print(", ");
 //      Serial.print(current_motor_speed);
 //      Serial.print(", ");
 //      Serial.println(additional_required_speed);
@@ -92,6 +94,14 @@ int Motor::getLastRequestedMotorSpeed_PID() {
  */
 void Motor::updateRequestedSpeedByAFactor_PID(float correction_factor) {
   setRequestedSpeed_PID(correction_factor * last_requested_motor_speed);
+}
+
+/**
+ * Applies an adjustment calculated by the heading PID to the speed that 
+ * needs to be requested from the motor PIDs.
+ */
+void Motor::updateRequestedSpeedByAdjustment_PID(float adjustment) {
+  setRequestedSpeed_PID(last_requested_motor_speed + adjustment);
 }
 
 /**

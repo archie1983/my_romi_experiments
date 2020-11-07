@@ -112,38 +112,38 @@ void StateMachine::update(bool left_line_visible, bool centre_line_visible, bool
  * related to that state.
  */
 void StateMachine::setState(LineFollowingStates state) {
-  switch(state) {
-    case IDLING:
-      Serial.println("IDLING");
-      break;
-    case MOVING_WITH_LINE:
-      Serial.println("MOVING_WITH_LINE");
-      break;
-    case LINE_LOST:
-      Serial.println("LINE_LOST");
-      break;
-    case LOOKING_FOR_LINE_TURNING_LEFT:
-      Serial.println("LOOKING_FOR_LINE_TURNING_LEFT");
-      break;
-    case LOOKING_FOR_LINE_TURNING_RIGHT:
-      Serial.println("LOOKING_FOR_LINE_TURNING_RIGHT");
-      break;
-    case LOOKING_FOR_LINE_MOVING_FORWARD:
-      Serial.println("LOOKING_FOR_LINE_MOVING_FORWARD");
-      break;
-    case TURNING_TO_GO_HOME:
-      Serial.println("TURNING_TO_GO_HOME");
-      break;
-    case TURNING_TO_GO_HOME_MOTOR1_DONE:
-      Serial.println("TURNING_TO_GO_HOME_MOTOR1_DONE");
-      break;
-    case MOVING_TO_GO_HOME:
-      Serial.println("MOVING_TO_GO_HOME");
-      break;
-    case HOME_REACHED:
-      Serial.println("HOME_REACHED");
-      break;
-  }
+//  switch(state) {
+//    case IDLING:
+//      Serial.println("IDLING");
+//      break;
+//    case MOVING_WITH_LINE:
+//      Serial.println("MOVING_WITH_LINE");
+//      break;
+//    case LINE_LOST:
+//      Serial.println("LINE_LOST");
+//      break;
+//    case LOOKING_FOR_LINE_TURNING_LEFT:
+//      Serial.println("LOOKING_FOR_LINE_TURNING_LEFT");
+//      break;
+//    case LOOKING_FOR_LINE_TURNING_RIGHT:
+//      Serial.println("LOOKING_FOR_LINE_TURNING_RIGHT");
+//      break;
+//    case LOOKING_FOR_LINE_MOVING_FORWARD:
+//      Serial.println("LOOKING_FOR_LINE_MOVING_FORWARD");
+//      break;
+//    case TURNING_TO_GO_HOME:
+//      Serial.println("TURNING_TO_GO_HOME");
+//      break;
+//    case TURNING_TO_GO_HOME_MOTOR1_DONE:
+//      Serial.println("TURNING_TO_GO_HOME_MOTOR1_DONE");
+//      break;
+//    case MOVING_TO_GO_HOME:
+//      Serial.println("MOVING_TO_GO_HOME");
+//      break;
+//    case HOME_REACHED:
+//      Serial.println("HOME_REACHED");
+//      break;
+//  }
   
   currentState = state;
   switch (state) {

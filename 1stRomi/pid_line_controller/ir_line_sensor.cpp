@@ -16,6 +16,13 @@ volatile long LineSensor::right_enc_pulse_cnt_prev = 0;
 volatile long LineSensor::left_enc_pulse_cnt_cur = 0;
 volatile long LineSensor::right_enc_pulse_cnt_cur = 0;
 volatile bool LineSensor::led_state = false;
+int LineSensor::speed_update_scaler = 0;
+int LineSensor::speed_update_counter = 0;
+
+/**
+ * counter for rolling averaging.
+ */
+volatile unsigned int rolling_avg_cnt = 0;
 
 /**
  * Getting space for the threshold pointers that we might have.
@@ -52,12 +59,23 @@ ISR( TIMER3_COMPA_vect ) {
 /**
  * Returns the current sensor value compensated for the bias.
  */
-unsigned int LineSensor::getCurrentSensorValue() {
+unsigned int LineSensor::getUnbiasedSensorValue() {
   if (currentReading > bias) {
     return currentReading - bias;
   } else {
     return 0;
   }
+}
+
+/**
+ * Returns the current rolling average sensor value compensated for the bias.
+ */
+unsigned int LineSensor::getCurrentSensorValue() {
+  unsigned long result = 0;
+  for (int cnt = 0; cnt < LINE_SENSOR_AVG_ROLL_COUNT; cnt++) {
+    result += rollingAvgReadings[cnt];
+  }
+  return (result / LINE_SENSOR_AVG_ROLL_COUNT);
 }
 
 /**
@@ -100,7 +118,7 @@ unsigned long LineSensor::getBias() {
  * Returns a flag of whether the sensor is above a line or not.
  */
 bool LineSensor::overLine() {
-  return getCurrentSensorValue() > 300;
+  return getCurrentSensorValue() > LINE_DETECTION_THRESHOLD;
 }
 
 /**
@@ -128,12 +146,20 @@ static void LineSensor::updateAllInitialisedSensors() {
   /**
    * Apart from updating all initialised sensors, we'll also want to
    * calculate speed of both wheels or at least have the variables ready.
+   * 
+   * But only if it's time according to the scaler.
    */
-  left_enc_pulse_cnt_prev = left_enc_pulse_cnt_cur;
-  right_enc_pulse_cnt_prev = right_enc_pulse_cnt_cur;
+  if (speed_update_counter >= speed_update_scaler) {
+    left_enc_pulse_cnt_prev = left_enc_pulse_cnt_cur;
+    right_enc_pulse_cnt_prev = right_enc_pulse_cnt_cur;
+  
+    left_enc_pulse_cnt_cur = Encoder::getLeftEncoder()->getPulseCount();
+    right_enc_pulse_cnt_cur = Encoder::getRightEncoder()->getPulseCount();
+    speed_update_counter = 0;
+  } else {
+    speed_update_counter++;
+  }
 
-  left_enc_pulse_cnt_cur = Encoder::getLeftEncoder()->getPulseCount();
-  right_enc_pulse_cnt_cur = Encoder::getRightEncoder()->getPulseCount();
 
   /*
    * If we have any threshold running, then let's update their counters and act on them if it's
@@ -270,6 +296,11 @@ void LineSensor::readCurrentValue() {
 //        Serial.print(" : bias=");
 //        Serial.print(bias);
   } else {
+    /**
+     * Normal operation. Let's accumulate the rolling average values.
+     */
+    rollingAvgReadings[rolling_avg_cnt % LINE_SENSOR_AVG_ROLL_COUNT] = getUnbiasedSensorValue();
+    rolling_avg_cnt++;
 //        Serial.print(adc_pin);
 //        Serial.print(": ");
 //        Serial.print(currentReading);
@@ -391,6 +422,7 @@ void LineSensor::initialiseTimer3(long desired_frequency) {
 
     OCR3A = best_candidate_counter;
     LineSensor::current_measurement_frequency = best_candidate_frequency;
+    LineSensor::speed_update_scaler = best_candidate_frequency / WHEEL_SPEED_UPDATE_FREQUENCY;
   }
    
   // enable timer compare interrupt:

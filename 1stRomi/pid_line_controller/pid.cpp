@@ -160,6 +160,7 @@ float PID_c::update(float demand, float measurement) {
   //  Serial.print(-Kp_output);
   //  Serial.print(", ");
   //  Serial.println(-Kd_output);
+    //printComponents();
   
     // Pass the result back.
     return output_signal;

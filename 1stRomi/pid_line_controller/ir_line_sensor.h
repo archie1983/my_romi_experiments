@@ -15,9 +15,14 @@ class LineSensor {
   public:
 
     /**
-     * Returns the current sensor value compensated for the bias.
+     * Returns the current rolling average sensor value compensated for the bias.
      */
     unsigned int getCurrentSensorValue();
+
+    /**
+     * Returns the current sensor value compensated for the bias.
+     */
+    unsigned int LineSensor::getUnbiasedSensorValue();
 
     /**
      * Returns the current sensor value compensated for the if we think
@@ -120,6 +125,16 @@ class LineSensor {
     static double current_measurement_frequency;
 
     /**
+     * This variable will store the scaler value for speed updates to ensure that we get the desired speed update
+     * frequency as in WHEEL_SPEED_UPDATE_FREQUENCY.
+     */
+    static int speed_update_scaler;
+    /**
+     * In conjunction with speed_update_scaler this will allow for correct scaling.
+     */
+    static int speed_update_counter;
+
+    /**
      * We'll want to keep track of encoder pulses- the previous (old) value will
      * be compared to the current encoder pulse reading in determining speeds 
      * for both wheels. These will be pulses per second. Another conversion 
@@ -153,6 +168,12 @@ class LineSensor {
      * Current reading of the sensor.
      */
     volatile unsigned int currentReading;
+
+    /**
+     * Buffer to keep the line sesnor values for rolling averaging.
+     */
+    volatile unsigned long rollingAvgReadings[LINE_SENSOR_AVG_ROLL_COUNT];
+    volatile unsigned int rolling_avg_cnt; //# counter for rolling averaging.
 
     /**
      * A number of outstanding calibration values - if this is above 0,

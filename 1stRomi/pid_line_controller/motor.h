@@ -65,6 +65,12 @@ class Motor : public ThresholdCallback {
     void updateRequestedSpeedByAFactor_PID(float correction_factor);
 
     /**
+     * Applies an adjustment calculated by the heading PID to the speed that 
+     * needs to be requested from the motor PIDs.
+     */
+    void Motor::updateRequestedSpeedByAdjustment_PID(float adjustment);
+
+    /**
      * Sets the target speed for the motro PID.
      */
     void setRequestedSpeed_PID(int new_speed);

@@ -183,8 +183,8 @@ void nested_pid_weighed_sensors() {
    * If heading correction is negative, then we'll supply more power to the left motor
    * and less power to the right one, thus causing a turn.
    */
-  new_speed_right = TURNING_SPEED * heading_correction * -1;
-  new_speed_left = TURNING_SPEED * heading_correction;
+  new_speed_right = WLS_TURNING_SPEED * heading_correction * -1;
+  new_speed_left = WLS_TURNING_SPEED * heading_correction;
 
   if (abs(wls) > HEADING_TOLERANCE) {
   //if ((sensor_l || sensor_c || sensor_r) && abs(wls) > 0.06) {
@@ -207,8 +207,11 @@ void nested_pid_weighed_sensors() {
 //      Serial.print(" heading_correction=");
 //      Serial.println(heading_correction);
     }
-    Motor::getRightMotor()->setRequestedSpeed_PID(new_speed_right);
-    Motor::getLeftMotor()->setRequestedSpeed_PID(new_speed_left);
+
+    Motor::getRightMotor()->updateRequestedSpeedByAdjustment_PID(new_speed_right);
+    Motor::getLeftMotor()->updateRequestedSpeedByAdjustment_PID(new_speed_left);
+//    Motor::getRightMotor()->setRequestedSpeed_PID(new_speed_right);
+//    Motor::getLeftMotor()->setRequestedSpeed_PID(new_speed_left);
   } else {
     /*
      * going straight 
@@ -232,12 +235,24 @@ void act_on_commands() {
     int steps_to_turn = 100;
     int time_to_turn = 200;
     int initial_pid_speed = 600;
+    bool tpid_dir = false;
     //This line checks whether there is anything to read
     if ( Serial.available() ) {
       String in_cmd = Serial.readString();
   
-      if (in_cmd.indexOf("stop") > -1) { //# Stopping completely
-        Serial.println("STOPPING");
+      if (in_cmd.indexOf("opid") > -1) { //# Go one way with PID and when receive this again, then switch direction.
+        if (getRightWheelSpeed() > 0) {
+          if (tpid_dir) {
+            Motor::getRightMotor()->setRequestedSpeed_PID(TURNING_SPEED);
+          } else {
+            Motor::getRightMotor()->setRequestedSpeed_PID(-TURNING_SPEED);
+          }
+          tpid_dir = !tpid_dir;
+        } else {
+          Motor::getRightMotor()->goAtGivenSpeed_PID(TURNING_SPEED);
+        }
+      } else if (in_cmd.indexOf("stop") > -1) { //# Stopping completely
+        //Serial.println("STOPPING");
         stopAllMotion();
       } else if (in_cmd.indexOf("line") > -1) { //# Starting to look for line
         Serial.println("Looking for line");
