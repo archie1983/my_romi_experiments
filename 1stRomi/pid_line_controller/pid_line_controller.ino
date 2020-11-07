@@ -25,22 +25,15 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(100);
 
-/**
- * Only wait for serial to connect if we're running with a cable
- */
+  /**
+   * Only wait for serial to connect if we're running with a cable
+   */
   if(OPER_MODE == DEBUG_MODE) {
     while (!Serial) {
       ; // wait for serial port to connect. Needed for native USB port only
     }
-  } else {
-    /**
-     * If we're running without a cable, then wait a little after switched on
-     * and then start moving.
-     */
-     delay(3000);
-     lookForLine();
+    Serial.println("***RESET***");
   }
-  Serial.println("***RESET***");
 
   /**
    * Turns out that if we do this inside the constructor of LineSensor, then our timer 
@@ -52,6 +45,15 @@ void setup() {
 
   StateMachine::getStateMachine()->setHeadingPID(&heading_pid);
   StateMachine::getStateMachine()->setState(StateMachine::LineFollowingStates::IDLING);
+
+  if(OPER_MODE == PRODUCTION_MODE) {
+    /**
+     * If we're running without a cable, then wait a little after switched on
+     * and then start moving.
+     */
+     delay(3000);
+     lookForLine();
+  }
 }
 
 void loop() {  
@@ -220,7 +222,7 @@ void nested_pid_weighed_sensors() {
       //Serial.println("Going straight");
     }
     //Serial.println("Going straight");
-    //heading_pid.reset();
+    heading_pid.reset();
     Motor::getRightMotor()->setRequestedSpeed_PID(TRAVEL_LINE_SPEED);
     Motor::getLeftMotor()->setRequestedSpeed_PID(TRAVEL_LINE_SPEED);
   }
