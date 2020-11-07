@@ -93,6 +93,13 @@ void Kinematics::turnToHomeHeading(bool use_PID) {
 }
 
 /**
+ * Turns around to face back.
+ */
+void Kinematics::turnToFaceBack(bool use_PID) {
+  turnByAngle(PI, use_PID);
+}
+
+/**
  * Returns the current distance from home.
  */
 long Kinematics::getCurrentDistanceFromHome() {
@@ -117,6 +124,17 @@ bool Kinematics::tooFarFromHomeToLookForLine() {
     Serial.println(getCurrentDistanceFromHome());
   }
   return getCurrentDistanceFromHome() > DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE;
+}
+
+/**
+ * Returns a flag of whether we're too close to home for a lost line to be a line gap.
+ */
+bool Kinematics::tooCloseToHomeToBeGap() {
+  if (OPER_MODE == DEBUG_MODE) {
+    Serial.print("TO HOME: ");
+    Serial.println(getCurrentDistanceFromHome());
+  }
+  return getCurrentDistanceFromHome() < DISTANCE_FROM_HOME_TO_NOT_EXPECT_A_GAP;  
 }
 
 /**

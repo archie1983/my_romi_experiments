@@ -27,6 +27,8 @@ class StateMachine {
       TURNING_RIGHT_TO_FIND_LINE_MOTOR1_DONE, //# For identical reasons as above we need this state for when we look right for the line.
       TURNING_LEFT_TO_FIND_LINE_MOTOR1_DONE, //# For identical reasons as above we need this state for when we look left for the line.
       TURNING_BACK_TO_FIND_LINE_MOTOR1_DONE, //# For identical reasons as above we need this state for when we turn back to where we were while looking for the line.
+      LOOKING_FOR_LINE_BEHIND_ME, //# On our back run we'll need to look for line behind the robot.
+      TURNING_FOR_LINE_BEHIND_ME_MOTOR1_DONE, //# For identical reasons as above we need this state for when we look for the line behind us.
       MOVING_TO_GO_HOME,
       HOME_REACHED
     };

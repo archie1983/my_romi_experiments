@@ -43,7 +43,7 @@
  */
 #define MOTOR_PID_UPDATE_TIME 5 //# update time in ms for PID controller.
 #define REPORT_TIME 100 //# update time in ms for PID controller.
-#define HEADING_PID_UPDATE_TIME 35 //# update time in ms for PID controller.
+#define HEADING_PID_UPDATE_TIME 25 //# update time in ms for PID controller.
 #define KINEMATICS_UPDATE_TIME 25 //# update time in ms for kinematics data.
 #define STATE_MACH_UPDATE_TIME 25 //# update time in ms for state machine line sensor data.
 
@@ -118,8 +118,8 @@
 #define ANGLE_TO_TURN_RIGHT_WHEN_FINDING_LINE 100.0 //# first turn 100 degrees right
 #define ANGLE_TO_TURN_LEFT_WHEN_FINDING_LINE -200.0 //# now we turn the hundred degrees back and another 100 to the left.
 #define ANGLE_TO_TURN_BACK_WHEN_FINDING_LINE 100.0 //# now we turn back to where we were before we started looking for the line.
-#define DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE 1500 //# If we're this far (distance in mm) from home, then don't go straight looking for line anymore if turning left and right didn't find it. Instead go home.
-
+#define DISTANCE_FROM_HOME_TO_NOT_LOOK_FOR_LINE 1600 //# If we're this far (distance in mm) from home, then don't go straight looking for line anymore if turning left and right didn't find it. Instead go home.
+#define DISTANCE_FROM_HOME_TO_NOT_EXPECT_A_GAP 1000 //# If we're this close (distance in mm) to home, then don't expect there to be a gap in the line. So, if line lost, then don't look for it going forward, go back instead.
 /**
  * Romi wheels are then separated (middle of the wheel to middle of the wheel) by this distance
  */

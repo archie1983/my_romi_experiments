@@ -49,6 +49,11 @@ class Kinematics {
     bool tooFarFromHomeToLookForLine();
 
     /**
+     * Returns a flag of whether we're too close to home for a lost line to be a line gap.
+     */
+    bool tooCloseToHomeToBeGap();
+
+    /**
      * Returns the required number of encoder counts for the LEFT wheel
      * that we need for a rotation BY the given angle. The angle is given
      * in radians and the function returns encoder count for the LEFT wheel.
@@ -93,6 +98,11 @@ class Kinematics {
      * bool use_PID - a flag of whether we want to use PID or not.
      */
     void turnToHomeHeading(bool use_PID);
+
+    /**
+     * Turns around to face back.
+     */
+    void Kinematics::turnToFaceBack(bool use_PID);
 
     /**
      * Runs the motors for the required number of counts to get back
